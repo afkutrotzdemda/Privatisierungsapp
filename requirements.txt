@@ -1,0 +1,14 @@
+# Text Anonymisierung
+presidio-analyzer==2.2.354
+presidio-anonymizer==2.2.354
+
+# Sprachmodell für deutsche Texte
+spacy>=3.0.0
+
+# Hotkey und Zwischenablage
+keyboard==0.13.5
+pyperclip==1.8.2
+
+# System Tray Icon
+pystray==0.19.5
+Pillow>=10.0.0
