@@ -1,44 +1,56 @@
 # ====================================
-# GOOGLE COLAB COMMANDS - PRESIDIO TEST
+# GOOGLE COLAB COMMANDS - PRESIDIO
 # ====================================
 
-# Kopiere diese Zeilen nacheinander in Google Colab Zellen:
-
-
-# ---- ZELLE 1: Repository clonen ----
+# ---- SCHRITT 1: Setup (einmal ausführen) ----
 !git clone https://github.com/afkutrotzdemda/Privatisierungsapp
 %cd Privatisierungsapp
-
-
-# ---- ZELLE 2: Presidio installieren ----
-!pip install presidio-analyzer presidio-anonymizer
-
-
-# ---- ZELLE 3: Test ausführen ----
-!python test_anonymizer.py
+!pip install -q presidio-analyzer presidio-anonymizer
 
 
 # ====================================
-# ALTERNATIVE: Alles in einer Zelle
+# VARIANTE 1: ANWALTS-VERSION (EMPFOHLEN!)
+# ====================================
+# Erkennt: Namen, Adressen, Aktenzeichen, Steuer-IDs, etc.
+
+!python presidio_anwalt.py
+
+
+# ====================================
+# VARIANTE 2: STANDARD-VERSION
+# ====================================
+# Erkennt: Email, Telefon, IBAN, Datum, etc.
+
+!python presidio_test_deutsch.py
+
+
+# ====================================
+# EIGENEN TEXT ANONYMISIEREN:
 # ====================================
 
-!git clone https://github.com/afkutrotzdemda/Privatisierungsapp && cd Privatisierungsapp && pip install presidio-analyzer presidio-anonymizer && python test_anonymizer.py
+# Script laden (nur einmal)
+exec(open('presidio_anwalt.py').read())
 
-
-# ====================================
-# Eigenen Text testen:
-# ====================================
-
-from src.anonymizer import TextAnonymizer
-
-anonymizer = TextAnonymizer(language="de")
-anonymizer.initialize()
-
-# DEINEN TEXT HIER:
+# DEINEN TEXT HIER EINFÜGEN:
 mein_text = """
-Max Mustermann
+Mandant: Max Mustermann
 Email: max@example.com
 Tel: 0176 123456
+Adresse: Hauptstraße 45, 10115 Berlin
+Az. 1 Js 123/21
 """
 
-print(anonymizer.anonymize(mein_text))
+# Anonymisieren
+anonymisiert = anonymize_text(mein_text, 'en')
+print("ANONYMISIERT:")
+print(anonymisiert)
+
+
+# ====================================
+# ALLES IN EINER ZELLE:
+# ====================================
+
+!git clone https://github.com/afkutrotzdemda/Privatisierungsapp
+%cd Privatisierungsapp
+!pip install -q presidio-analyzer presidio-anonymizer
+!python presidio_anwalt.py
