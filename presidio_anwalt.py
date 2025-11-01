@@ -400,24 +400,196 @@ def anonymize_text(text, language="en"):
 # ============================================================================
 
 DEIN_TEXT = """
-Betreff: Mandant Max Mustermann
+KANZLEI MÜLLER & PARTNER
+Rechtsanwälte
+Bahnhofstraße 78
+60329 Frankfurt am Main
+Tel: 069-12345678 | Fax: 069-12345679
+Email: kanzlei@mueller-partner.de
+www.mueller-partner.de
 
-Sehr geehrte Frau Dr. Schmidt,
+                                            Frankfurt, den 15.11.2024
 
-im Verfahren Az. 1 Js 123/21 gegen meinen Mandanten Herr Klaus Meyer,
-wohnhaft in der Hauptstraße 45, 10115 Berlin, geboren am 15.03.1985,
-möchte ich folgende Unterlagen einreichen:
+Amtsgericht München
+Zivilgericht, Abteilung 12
+Nymphenburger Straße 20
+80335 München
 
-Kontaktdaten:
-- Email: klaus.meyer@email.de
-- Telefon: 0176 98765432
-- Steuer-ID: 12345678901
-- IBAN: DE89 3704 0044 0532 0130 00
+Az. unserer Kanzlei: 2024/456/MP
+Ihr Az.: 12 C 789/24
 
-Der Vorfall ereignete sich am 24.10.2023 gegen 14:30 Uhr.
-Zeugin war Frau Anna Schmidt, Tel: +49 30 12345678.
 
-Mit freundlichen Grüßen
+Betreff: Klage wegen Schadensersatz und Schmerzensgeld
+         Kläger: Dr. Max Mustermann
+         Beklagter: Firma Schmidt GmbH & Co. KG
+         Streitwert: 45.000,00 EUR
+
+
+Sehr geehrte Damen und Herren,
+
+namens und im Auftrag meines Mandanten, Herrn Dr. Max Alexander Mustermann,
+geboren am 15.03.1985 in München, wohnhaft in der Leopoldstraße 123, 80802 München,
+Steuer-ID: 12345678901, Personalausweis-Nr.: L234567890, erhebe ich
+
+                                    Klage
+
+gegen die Beklagte, Firma Schmidt GmbH & Co. KG, Sitz in Hamburg, vertreten durch
+den Geschäftsführer Herrn Thomas Weber, Hauptstraße 45, 20095 Hamburg,
+Handelsregister Hamburg HRB 123456.
+
+
+I. SACHVERHALT
+
+1. Mein Mandant war vom 01.04.2020 bis 31.08.2024 bei der Beklagten als
+   leitender Angestellter im Bereich IT-Security beschäftigt (vgl. Arbeitsvertrag
+   vom 15.03.2020, Az. 2020/AV/456).
+
+2. Die monatliche Vergütung belief sich zuletzt auf 8.500,00 EUR brutto.
+   Die Zahlungen erfolgten stets auf das Konto meines Mandanten bei der
+   Deutschen Bank, IBAN: DE89 3704 0044 0532 0130 00, BIC: COBADEFFXXX.
+
+3. Am 12.07.2024 gegen 09:45 Uhr ereignete sich in den Büroräumen der Beklagten
+   in der Alsterstraße 67, 20095 Hamburg, ein Arbeitsunfall. Mein Mandant stürzte
+   aufgrund mangelhafter Sicherung eines Kabels und erlitt einen Bruch des rechten
+   Oberarmknochens sowie eine schwere Gehirnerschütterung.
+
+4. Der Unfall wurde durch folgende Zeugen beobachtet:
+
+   a) Frau Anna Schmidt, Sekretärin, wohnhaft Müllerweg 34, 22087 Hamburg,
+      Tel: 040-98765432, Email: a.schmidt@example.de
+
+   b) Herr Prof. Dr. Klaus Meyer, IT-Leiter, Hauptstraße 12, 20354 Hamburg,
+      Tel: +49 40 12345678, Email: k.meyer@example.com
+
+   c) Frau Petra Schulz, Reinigungskraft, Gartenstraße 5, 21073 Hamburg,
+      Tel: 0176 98765432
+
+5. Die ärztliche Erstversorgung erfolgte durch Dr. med. Andreas Werner,
+   Facharzt für Orthopädie, Praxis in der Eppendorfer Landstraße 89, 20249 Hamburg,
+   Telefon: 040-23456789, Email: praxis@dr-werner-ortho.de.
+
+6. Mein Mandant war vom 12.07.2024 bis 15.10.2024 arbeitsunfähig erkrankt.
+   Die Beklagte weigerte sich, Lohnfortzahlung über den 30.09.2024 hinaus zu leisten.
+
+7. Am 20.08.2024 erhielt mein Mandant eine fristlose Kündigung per Einschreiben
+   (Sendungsnummer: RR123456789DE), zugestellt am 21.08.2024 um 10:15 Uhr.
+
+8. Gegen diese Kündigung läuft bereits ein separates Verfahren vor dem
+   Arbeitsgericht Hamburg, Az. 15 Ca 234/24.
+
+
+II. ANSPRUCHSGRUNDLAGEN
+
+1. Schadensersatz gem. § 823 Abs. 1 BGB i.V.m. § 618 BGB
+   - Verdienstausfall: 17.000,00 EUR (2 Monate à 8.500 EUR)
+   - Behandlungskosten: 5.400,00 EUR
+   - Fahrtkosten zu Ärzten: 780,00 EUR
+   - Anwaltskosten Vorverfahren: 2.500,00 EUR
+
+   Zwischensumme: 25.680,00 EUR
+
+2. Schmerzensgeld gem. § 253 Abs. 2 BGB
+   Angemessen erscheinen mindestens: 15.000,00 EUR
+
+3. Feststellungsantrag bezüglich zukünftiger Schäden
+
+4. Verzugszinsen gem. § 288 BGB seit dem 01.09.2024
+
+
+III. BEWEISMITTEL
+
+1. Arbeitsvertrag vom 15.03.2020
+2. Gehaltsabrechnungen Juli - Oktober 2024
+3. Unfallprotokoll vom 12.07.2024, erstellt von Sicherheitsbeauftragtem
+4. Ärztliches Attest Dr. Werner vom 12.07.2024
+5. MRT-Befund Universitätsklinikum Hamburg-Eppendorf vom 13.07.2024
+6. Arbeitsunfähigkeitsbescheinigungen (durchgehend bis 15.10.2024)
+7. Kündigungsschreiben vom 20.08.2024
+8. Kontoauszüge Deutsche Bank, Konto-Nr.: 1234567890
+9. Zeugenaussage Frau Schmidt (Protokoll vom 05.09.2024, Az. Pol. HH-1234/24)
+10. Gutachten des Sachverständigen Dr. Friedrich Koch, Bergstraße 23,
+    60311 Frankfurt, Tel: 069-87654321, erstellt am 10.10.2024
+11. E-Mail-Verkehr mit Personalabteilung (von hr@schmidt-gmbh.de)
+12. Foto-Dokumentation der Unfallstelle (erstellt 12.07.2024, 10:30 Uhr)
+13. Zeugenvernehmung Prof. Dr. Meyer geplant für 20.12.2024, 14:00 Uhr
+
+
+IV. ANTRÄGE
+
+Ich beantrage,
+
+1. die Beklagte zu verurteilen, an meinen Mandanten 25.680,00 EUR nebst Zinsen
+   in Höhe von 5 Prozentpunkten über dem Basiszinssatz seit dem 01.09.2024 zu zahlen;
+
+2. die Beklagte zu verurteilen, an meinen Mandanten ein Schmerzensgeld in Höhe
+   von 15.000,00 EUR nebst Zinsen in Höhe von 5 Prozentpunkten über dem
+   Basiszinssatz seit Rechtshängigkeit zu zahlen;
+
+3. festzustellen, dass die Beklagte verpflichtet ist, meinem Mandanten alle
+   weiteren materiellen und immateriellen Schäden zu ersetzen, die aus dem
+   Unfall vom 12.07.2024 noch entstehen werden;
+
+4. die Beklagte zu verurteilen, die Kosten des Rechtsstreits zu tragen.
+
+
+V. TERMINSVERLEGUNGSANTRAG
+
+Ich beantrage zudem, den für den 28.11.2024 um 10:00 Uhr anberaumten
+Gütetermin zu verlegen, da mein Mandant an diesem Tag einen ärztlichen
+Kontrolltermin bei Dr. Werner wahrnehmen muss (Terminbestätigung vom 05.11.2024).
+
+Ein Ausweichtermin wäre der 05.12.2024 nach 14:00 Uhr oder jeder Tag ab dem
+10.12.2024 möglich.
+
+
+VI. PROZESSKOSTENHILFE
+
+Für den Fall, dass meinem Mandanten die Kosten des Rechtsstreits nicht zuzumuten
+sind, beantrage ich die Bewilligung von Prozesskostenhilfe. Die entsprechende
+Erklärung über die persönlichen und wirtschaftlichen Verhältnisse
+(Formular PKH 1) ist beigefügt.
+
+Aktuelle Vermögenssituation meines Mandanten:
+- Guthaben Girokonto: 450,00 EUR (Deutsche Bank)
+- Guthaben Sparkonto: 2.300,00 EUR (Sparkasse München, IBAN: DE12 7015 0000 1234 5678 90)
+- Keine Immobilien
+- PKW (Wert ca. 8.000 EUR, noch Kredit offen: 6.500 EUR bei VW Bank)
+- Unterhaltspflicht für 2 Kinder: Sophie Mustermann (geb. 12.05.2015) und
+  Leon Mustermann (geb. 23.08.2018), wohnhaft bei der Kindsmutter
+  Frau Lisa Mustermann, Rosenweg 8, 80805 München
+
+
+VII. ANLAGEN
+
+Anlage K1:  Arbeitsvertrag
+Anlage K2:  Gehaltsabrechnungen (4 Stück)
+Anlage K3:  Unfallprotokoll
+Anlage K4:  Ärztliche Atteste (3 Stück)
+Anlage K5:  MRT-Befund
+Anlage K6:  AU-Bescheinigungen
+Anlage K7:  Kündigungsschreiben
+Anlage K8:  Kontoauszüge
+Anlage K9:  Sachverständigengutachten
+Anlage K10: E-Mail-Verkehr
+Anlage K11: Lichtbilder
+Anlage K12: Formular PKH 1
+
+
+Mit vorzüglicher Hochachtung
+
+
+____________________
+Dr. jur. Michael Müller
+Rechtsanwalt
+Fachanwalt für Arbeitsrecht
+Zulassungsnummer: 12345
+Rechtsanwaltskammer Frankfurt
+
+Kontakt Kanzlei:
+Sekretariat Frau Sabine Weber: Tel. 069-12345678-10, s.weber@mueller-partner.de
+Buchhaltung Herr Josef Klein: Tel. 069-12345678-20, buchhaltung@mueller-partner.de
+Fax: 069-12345679
+Notfallnummer (24/7): +49 172 9876543
 """
 
 # ↑↑↑ Füge DEINEN juristischen Text hier ein! ↑↑↑
