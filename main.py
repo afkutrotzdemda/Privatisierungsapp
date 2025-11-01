@@ -45,14 +45,15 @@ class TextAnonymizerApp:
             logger.error("Fehler beim Initialisieren von Presidio!")
             return False
 
-        # Erstelle Hotkey Handler
-        self.hotkey_handler = HotkeyHandler(
-            on_anonymize_callback=self.anonymizer.anonymize
-        )
-
         # Erstelle Tray Icon
         self.tray_icon = TrayIcon(
             on_quit_callback=self.quit
+        )
+
+        # Erstelle Hotkey Handler mit Status-Callback
+        self.hotkey_handler = HotkeyHandler(
+            on_anonymize_callback=self.anonymizer.anonymize,
+            on_status_change=self.tray_icon.set_status  # Verbindet Hotkey mit Tray Icon
         )
 
         return True

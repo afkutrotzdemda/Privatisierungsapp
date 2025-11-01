@@ -231,6 +231,27 @@ iban_recognizer = PatternRecognizer(
 )
 registry.add_recognizer(iban_recognizer)
 
+# Kontonummer (alte deutsche Kontonummern, 6-10 Stellen)
+account_patterns = [
+    Pattern(
+        name="account_number",
+        regex=r"\bKonto[-\s]?Nr\.?:?\s*\d{6,10}\b",
+        score=0.9
+    ),
+    Pattern(
+        name="account_number_simple",
+        regex=r"\bKontonummer:?\s*\d{6,10}\b",
+        score=0.9
+    ),
+]
+account_recognizer = PatternRecognizer(
+    supported_entity="ACCOUNT_NUMBER",
+    patterns=account_patterns,
+    context=["konto", "kontonummer", "account"],
+    supported_language="en"
+)
+registry.add_recognizer(account_recognizer)
+
 # Steuer-ID
 tax_patterns = [
     Pattern(
@@ -389,6 +410,7 @@ def anonymize_text(text, language="en"):
             "TAX_ID": OperatorConfig("replace", {"new_value": "<STEUER-ID>"}),
             "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "<SV-NUMMER>"}),
             "ID_NUMBER": OperatorConfig("replace", {"new_value": "<AUSWEIS-NR>"}),
+            "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "<KONTO-NR>"}),
         }
     )
 
