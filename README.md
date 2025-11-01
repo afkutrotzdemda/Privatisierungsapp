@@ -139,6 +139,55 @@ Logs werden in `anonymizer.log` gespeichert und helfen bei der Fehlersuche.
 
 MIT License
 
+## Cloud-Plattformen zum Testen (ohne Windows PC)
+
+Wenn du das Projekt testen möchtest ohne Windows PC:
+
+### 1. **Replit** (EMPFOHLEN für schnelle Tests)
+🔗 https://replit.com
+- Kostenlos
+- Direkt im Browser (auch auf Android/Tablet)
+- Python vorinstalliert
+- Einfach Projekt hochladen und ausführen
+- **Tipp**: Nutze `test_simple.py` für schnelle Demo
+
+### 2. **Google Colab** (Für Jupyter Notebooks)
+🔗 https://colab.research.google.com
+- Kostenlos mit Google Account
+- GPU verfügbar
+- Gut für Presidio-Tests
+- Funktioniert auf Tablets
+
+### 3. **GitHub Codespaces**
+🔗 https://github.com/codespaces
+- 60 Stunden/Monat kostenlos
+- VS Code im Browser
+- Voller Linux-Zugriff
+- Beste Option für vollständige Tests
+
+### 4. **PythonAnywhere**
+🔗 https://www.pythonanywhere.com
+- Free Tier verfügbar
+- Web-basierte Konsole
+- Gut für längerfristige Tests
+
+### Quick-Test auf Replit:
+
+```bash
+# 1. Auf replit.com registrieren
+# 2. "Create Repl" → "Import from GitHub"
+# 3. Deine Repository-URL eingeben
+# 4. In der Shell ausführen:
+pip install presidio-analyzer presidio-anonymizer
+python test_simple.py
+```
+
+## Hinweis zur Test-Version
+
+- `test_simple.py` - Funktioniert überall, nutzt nur Regex (Demo)
+- `test_anonymizer.py` - Benötigt Presidio (genauer, braucht mehr Setup)
+- Die Windows-App benötigt natürlich Windows für Hotkeys und System Tray
+
 ## Support
 
 Bei Fragen oder Problemen bitte ein Issue erstellen.
