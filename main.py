@@ -1,5 +1,5 @@
 """
-Text Anonymisierer - Hauptprogramm
+Anonymify - Hauptprogramm
 
 Drücke Strg+Alt+A um Text aus der Zwischenablage zu anonymisieren.
 """
@@ -36,7 +36,7 @@ class TextAnonymizerApp:
     def initialize(self):
         """Initialisiert die Anwendung"""
         logger.info("=" * 60)
-        logger.info("Text Anonymisierer wird gestartet...")
+        logger.info("Anonymify wird gestartet...")
         logger.info("=" * 60)
 
         # Initialisiere Presidio
@@ -45,14 +45,15 @@ class TextAnonymizerApp:
             logger.error("Fehler beim Initialisieren von Presidio!")
             return False
 
-        # Erstelle Hotkey Handler
-        self.hotkey_handler = HotkeyHandler(
-            on_anonymize_callback=self.anonymizer.anonymize
-        )
-
         # Erstelle Tray Icon
         self.tray_icon = TrayIcon(
             on_quit_callback=self.quit
+        )
+
+        # Erstelle Hotkey Handler mit Status-Callback
+        self.hotkey_handler = HotkeyHandler(
+            on_anonymize_callback=self.anonymizer.anonymize,
+            on_status_change=self.tray_icon.set_status  # Verbindet Hotkey mit Tray Icon
         )
 
         return True
@@ -69,7 +70,7 @@ class TextAnonymizerApp:
             self.hotkey_handler.start()
 
             logger.info("=" * 60)
-            logger.info("Text Anonymisierer läuft!")
+            logger.info("Anonymify läuft!")
             logger.info("Drücke Strg+Alt+A um Text zu anonymisieren")
             logger.info("=" * 60)
 
