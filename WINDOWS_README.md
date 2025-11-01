@@ -46,12 +46,13 @@ Das Script installiert **automatisch**:
 
 → Ein **Icon mit "A"** erscheint in der Taskleiste
 
-### Workflow
+### Workflow (noch einfacher!)
 
-1. **Text kopieren** (Strg+C)
+1. **Text markieren** (blau markieren wie gewohnt)
    - Z.B. Mandantenbrief, Schriftsatz, E-Mail
 
 2. **Strg+Alt+A drücken**
+   - Programm kopiert automatisch (Strg+C wird simuliert)
    - Icon wird **GELB** während anonymisiert wird
 
 3. **Text einfügen** (Strg+V)
@@ -60,6 +61,8 @@ Das Script installiert **automatisch**:
 
 4. **An KI senden**
    - DSGVO-konform ✓
+
+**Du musst NICHT mehr Strg+C drücken!** Nur markieren und Strg+Alt+A! ✨
 
 ---
 

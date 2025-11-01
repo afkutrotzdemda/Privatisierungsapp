@@ -58,11 +58,19 @@ class HotkeyHandler:
             # Setze Status auf 'working' (Icon wird gelb)
             self._set_status('working')
 
+            # AUTOMATISCH KOPIEREN: Simuliere Strg+C um markierten Text zu kopieren
+            logger.info("Kopiere markierten Text (Strg+C)...")
+            keyboard.send('ctrl+c')
+
+            # Kurz warten damit Strg+C fertig ist
+            import time
+            time.sleep(0.2)  # 200ms warten
+
             # Lese Text aus Zwischenablage
             text = pyperclip.paste()
 
             if not text or not text.strip():
-                logger.warning("Zwischenablage ist leer")
+                logger.warning("Zwischenablage ist leer - Bitte Text markieren vor Strg+Alt+A")
                 self._set_status('ready')  # Zurück zu grün
                 return
 

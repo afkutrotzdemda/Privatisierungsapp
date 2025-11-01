@@ -12,10 +12,12 @@ Ein Windows-Tool zum schnellen Anonymisieren von Texten mit **Strg+Alt+A**.
 
 ## Workflow
 
-1. Text kopieren (Strg+C)
-2. **Strg+Alt+A** drücken
+1. Text markieren (blau markieren wie gewohnt)
+2. **Strg+Alt+A** drücken (kopiert automatisch!)
 3. Anonymisierten Text einfügen (Strg+V)
 4. Fertig! Jetzt sicher an KI senden
+
+**Noch einfacher!** Du musst nicht mehr Strg+C drücken - nur markieren und Strg+Alt+A!
 
 ## Installation
 
