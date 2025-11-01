@@ -79,11 +79,11 @@ class TrayIcon:
 
             # Update Title
             titles = {
-                'ready': 'Text Anonymisierer - Bereit',
-                'working': 'Text Anonymisierer - Anonymisiert...',
-                'error': 'Text Anonymisierer - Fehler'
+                'ready': 'Anonymify - Bereit',
+                'working': 'Anonymify - Anonymisiert...',
+                'error': 'Anonymify - Fehler'
             }
-            self.icon.title = titles.get(status, 'Text Anonymisierer')
+            self.icon.title = titles.get(status, 'Anonymify')
 
             logger.info(f"Icon-Status geändert zu: {status}")
 
@@ -98,7 +98,7 @@ class TrayIcon:
             # Erstelle Menü
             menu = pystray.Menu(
                 item(
-                    '⚖️ Text Anonymisierer',
+                    '⚖️ Anonymify',
                     lambda: None,
                     enabled=False
                 ),
@@ -124,7 +124,7 @@ class TrayIcon:
             self.icon = pystray.Icon(
                 name="TextAnonymizer",
                 icon=icon_image,
-                title="Text Anonymisierer - Bereit",
+                title="Anonymify - Bereit",
                 menu=menu
             )
 

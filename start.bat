@@ -1,8 +1,8 @@
 @echo off
-REM Text Anonymisierer Starter
+REM Anonymify Starter
 echo.
 echo ================================
-echo Text Anonymisierer wird gestartet...
+echo Anonymify wird gestartet...
 echo ================================
 echo.
 

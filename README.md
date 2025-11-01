@@ -1,4 +1,4 @@
-# Text Anonymisierer für Windows
+# Anonymify für Windows
 
 Ein Windows-Tool zum schnellen Anonymisieren von Texten mit **Strg+Alt+A**.
 

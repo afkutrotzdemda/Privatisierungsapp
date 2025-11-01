@@ -1,6 +1,6 @@
 @echo off
 SETLOCAL EnableDelayedExpansion
-TITLE Text Anonymisierer - Installation
+TITLE Anonymify - Installation
 
 REM ============================================================================
 REM AUTOMATISCHES INSTALLATIONS-SCRIPT
@@ -128,7 +128,7 @@ if /i "%AUTOSTART%"=="j" (
     set SCRIPT_PATH=%CD%\start.bat
 
     REM Verwende PowerShell um Verknuepfung zu erstellen
-    powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('!STARTUP_FOLDER!\Text Anonymisierer.lnk'); $Shortcut.TargetPath = '!SCRIPT_PATH!'; $Shortcut.WorkingDirectory = '%CD%'; $Shortcut.WindowStyle = 7; $Shortcut.Save()"
+    powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('!STARTUP_FOLDER!\Anonymify.lnk'); $Shortcut.TargetPath = '!SCRIPT_PATH!'; $Shortcut.WorkingDirectory = '%CD%'; $Shortcut.WindowStyle = 7; $Shortcut.Save()"
 
     if errorlevel 1 (
         echo [WARNUNG] Konnte Auto-Start nicht einrichten
@@ -179,10 +179,10 @@ set /p START_NOW="App jetzt starten? (j/n): "
 
 if /i "%START_NOW%"=="j" (
     echo.
-    echo Starte Text Anonymisierer...
+    echo Starte Anonymify...
     echo.
     REM Starte in neuem Fenster
-    start "Text Anonymisierer" /MIN cmd /c "cd /d %CD% && call start.bat"
+    start "Anonymify" /MIN cmd /c "cd /d %CD% && call start.bat"
     echo.
     echo [OK] App gestartet!
     echo      Schaue in die Taskleiste fuer das Icon.

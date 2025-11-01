@@ -1,4 +1,4 @@
-# 🪟 Text Anonymisierer für Windows
+# 🪟 Anonymify für Windows
 
 **DSGVO-konforme Text-Anonymisierung mit einem Tastendruck!**
 
