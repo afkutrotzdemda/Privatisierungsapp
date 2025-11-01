@@ -1,0 +1,44 @@
+# ====================================
+# GOOGLE COLAB COMMANDS - PRESIDIO TEST
+# ====================================
+
+# Kopiere diese Zeilen nacheinander in Google Colab Zellen:
+
+
+# ---- ZELLE 1: Repository clonen ----
+!git clone https://github.com/afkutrotzdemda/Privatisierungsapp
+%cd Privatisierungsapp
+
+
+# ---- ZELLE 2: Presidio installieren ----
+!pip install presidio-analyzer presidio-anonymizer
+
+
+# ---- ZELLE 3: Test ausführen ----
+!python test_anonymizer.py
+
+
+# ====================================
+# ALTERNATIVE: Alles in einer Zelle
+# ====================================
+
+!git clone https://github.com/afkutrotzdemda/Privatisierungsapp && cd Privatisierungsapp && pip install presidio-analyzer presidio-anonymizer && python test_anonymizer.py
+
+
+# ====================================
+# Eigenen Text testen:
+# ====================================
+
+from src.anonymizer import TextAnonymizer
+
+anonymizer = TextAnonymizer(language="de")
+anonymizer.initialize()
+
+# DEINEN TEXT HIER:
+mein_text = """
+Max Mustermann
+Email: max@example.com
+Tel: 0176 123456
+"""
+
+print(anonymizer.anonymize(mein_text))
