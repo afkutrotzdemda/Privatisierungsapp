@@ -21,6 +21,7 @@ combination = "ctrl+alt+a"
 court_terms = [
     "Gericht",
     "Richter",
+    "Richterin",
     "Staatsanwaltschaft",
     "Amtsgericht",
     "Landgericht",
@@ -30,6 +31,41 @@ court_terms = [
     "Verwaltungsgericht",
     "Sozialgericht",
     "Arbeitsgericht",
+    "Familiengericht",
+    "Finanzgericht",
+    "Berufung",
+    "Revision",
+    "Rechtsmittel",
+    "Urteil",
+    "Beschluss",
+    "Verfügung",
+    "Verhandlung",
+    "Anhörung",
+    "Sitzung",
+    "Kammer",
+    "Senat",
+    "Instanz",
+]
+
+# Prozessbeteiligte (nicht anonymisieren - allgemeine Begriffe)
+process_parties = [
+    "Kläger",
+    "Klägerin",
+    "Beklagte",
+    "Beklagter",
+    "Angeklagte",
+    "Angeklagter",
+    "Zeuge",
+    "Zeugin",
+    "Gutachter",
+    "Gutachterin",
+    "Sachverständige",
+    "Sachverständiger",
+    "Partei",
+    "Gegenseite",
+    "Mandant",
+    "Mandantin",
+    "Vertragspartei",
 ]
 
 # Behörden
@@ -43,17 +79,64 @@ authorities = [
     "Ministerium",
     "Bundeskanzler",
     "Bundespräsident",
+    "Gerichtsvollzieher",
+    "Gerichtsvollzieherin",
+    "Insolvenzverwalter",
+    "Insolvenzverwalterin",
+    "Urkundsbeamter",
+    "Urkundsbeamtin",
 ]
 
 # Berufsbezeichnungen
 professions = [
     "Rechtsanwalt",
+    "Rechtsanwältin",
     "Notar",
+    "Notarin",
     "Steuerberater",
+    "Steuerberaterin",
     "Arzt",
+    "Ärztin",
     "Anwalt",
+    "Anwältin",
     "Staatsanwalt",
+    "Staatsanwältin",
     "Verteidiger",
+    "Verteidigerin",
+]
+
+# Rechtsgebiete
+legal_areas = [
+    "Strafrecht",
+    "Zivilrecht",
+    "Verwaltungsrecht",
+    "Familienrecht",
+    "Arbeitsrecht",
+    "Erbrecht",
+    "Mietrecht",
+    "Gesellschaftsrecht",
+    "Handelsrecht",
+    "Steuerrecht",
+    "Vertragsrecht",
+    "Verkehrsrecht",
+]
+
+# Rechtliche Begriffe
+legal_terms = [
+    "Vollmacht",
+    "Anspruch",
+    "Forderung",
+    "Schadensersatz",
+    "Schmerzensgeld",
+    "Vergleich",
+    "Vollstreckung",
+    "Mahnung",
+    "Verjährung",
+    "Klage",
+    "Widerspruch",
+    "Einspruch",
+    "Beschwerde",
+    "Antrag",
 ]
 
 # Organisationen

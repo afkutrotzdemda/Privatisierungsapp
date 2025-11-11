@@ -22,29 +22,48 @@ class FirstLetterOperator(Operator):
 
     def operate(self, text: str, params: Dict = None) -> str:
         """
-        Ersetzt Text durch ersten Buchstaben + Punkt
+        Ersetzt Namen durch Titel + ersten Buchstaben vom Nachnamen + Punkt
 
+        Titel bleiben ERHALTEN für bessere Lesbarkeit:
         "Max Mustermann" → "M."
-        "Dr. Anna Schmidt" → "D."
-        "Herr Müller" → "H."
+        "Dr. Anna Schmidt" → "Dr. S."
+        "Herr Müller" → "Herr M."
+        "Herr Dr. Klaus Meier" → "Herr Dr. M."
         """
         if not text or not text.strip():
             return text
 
-        # Entferne Leerzeichen
         text = text.strip()
 
-        # Finde ersten Buchstaben (nicht Titel wie Dr., Herr, etc.)
-        # Entferne häufige Titel
-        text_without_title = re.sub(r'^(Herr|Frau|Dr\.|Prof\.|Hr\.|Fr\.|Herrn)\s+', '', text)
+        # Extrahiere Titel am Anfang (können mehrere sein)
+        # Pattern: Herr, Frau, Dr., Prof., Hr., Fr., Herrn
+        title_match = re.match(r'^((Herr|Frau|Dr\.|Prof\.|Hr\.|Fr\.|Herrn)\s+)+', text)
 
-        # Erster Buchstabe vom Rest
-        if text_without_title:
-            first_letter = text_without_title[0].upper()
-            return f"{first_letter}."
+        if title_match:
+            # Titel gefunden
+            titles = title_match.group(0).strip()  # z.B. "Herr Dr."
+            rest = text[title_match.end():].strip()  # z.B. "Klaus Meier"
 
-        # Fallback: Erster Buchstabe vom Original
-        return f"{text[0].upper()}."
+            # Finde letztes Wort (Nachname)
+            words = rest.split()
+            if words:
+                last_name = words[-1]  # "Meier"
+                first_letter = last_name[0].upper()
+                return f"{titles} {first_letter}."
+            else:
+                # Kein Name nach Titel? Nimm ersten Buchstaben vom Titel
+                return f"{titles[0].upper()}."
+
+        else:
+            # Kein Titel: Nimm letztes Wort (Nachname)
+            words = text.split()
+            if len(words) >= 2:
+                # "Max Mustermann" → "M." (vom Nachnamen "Mustermann")
+                last_name = words[-1]
+                return f"{last_name[0].upper()}."
+            else:
+                # Nur ein Wort
+                return f"{text[0].upper()}."
 
     def validate(self, params: Dict = None) -> None:
         """Validierung (nicht benötigt)"""
@@ -56,6 +75,278 @@ class FirstLetterOperator(Operator):
 
     def operator_type(self) -> OperatorType:
         """Typ des Operators"""
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Ersetzt Straßennamen durch ersten Buchstaben + Suffix
+class StreetFirstLetterOperator(Operator):
+    """Anonymisiert Straßen zu 'X.straße 123'"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        Ersetzt Straßennamen durch ersten Buchstaben + Suffix + Hausnummer
+
+        "Musterstraße 123" → "M.straße 123"
+        "Hauptstr. 45a" → "H.str. 45a"
+        "Berliner Allee 10" → "B. Allee 10"
+        """
+        if not text or not text.strip():
+            return text
+
+        text = text.strip()
+
+        # Pattern: Wortanfang + suffix (straße/str./weg/platz/allee) + Nummer
+        # z.B. "Musterstraße 123", "Hauptstr. 45"
+        match = re.match(r'^([A-ZÄÖÜ][a-zäöüß]+)(straße|str\.|weg|platz|allee)(\s+\d+[a-zA-Z]?)$', text)
+
+        if match:
+            street_name = match.group(1)  # "Muster"
+            suffix = match.group(2)       # "straße"
+            number = match.group(3)       # " 123"
+
+            first_letter = street_name[0].upper()
+            return f"{first_letter}.{suffix}{number}"
+
+        # Fallback: Nur ersten Buchstaben
+        return f"{text[0].upper()}."
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "street_first_letter"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Maskiert E-Mail (behält Domain-Typ)
+class EmailMaskOperator(Operator):
+    """Maskiert E-Mail aber behält Struktur"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        "max.mueller@firma.de" → "***@***.de"
+        """
+        if not text or '@' not in text:
+            return "***@***.***"
+
+        local, domain = text.split('@', 1)
+        # Behalte nur TLD (.de, .com, etc.)
+        domain_parts = domain.split('.')
+        if len(domain_parts) >= 2:
+            tld = domain_parts[-1]
+            return f"***@***.{tld}"
+        return "***@***.***"
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "email_mask"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Maskiert Telefon (behält Vorwahl)
+class PhoneMaskOperator(Operator):
+    """Maskiert Telefon aber behält Vorwahl"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        "030 12345678" → "030 XXXXXX"
+        "+49 30 123456" → "+49 30 XXXXXX"
+        """
+        if not text or not text.strip():
+            return "XXXXXXXXXX"
+
+        text = text.strip()
+
+        # Pattern: Vorwahl + Rest
+        # z.B. "030 12345678", "+49 30 123456"
+        match = re.match(r'^(\+?\d{1,4}[\s\-/]?\d{1,4}[\s\-/]?)(.+)$', text)
+
+        if match:
+            prefix = match.group(1).strip()  # "030" oder "+49 30"
+            rest = match.group(2)
+
+            # Zähle Ziffern im Rest
+            digit_count = len([c for c in rest if c.isdigit()])
+            masked = 'X' * max(digit_count, 6)
+
+            return f"{prefix} {masked}"
+
+        # Fallback
+        return "XXXXXXXXXX"
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "phone_mask"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Maskiert IBAN (behält Ländercode)
+class IbanMaskOperator(Operator):
+    """Maskiert IBAN aber behält Ländercode"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        "DE89 3704 0044 0532 0130 00" → "DE** **** ****"
+        """
+        if not text or not text.strip():
+            return "DE** ****"
+
+        text = text.strip()
+
+        # Ländercode (erste 2 Zeichen)
+        if len(text) >= 2:
+            country = text[:2].upper()
+            return f"{country}** **** ****"
+
+        return "DE** ****"
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "iban_mask"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Maskiert Datum (behält Monat/Jahr)
+class DateMaskOperator(Operator):
+    """Maskiert Datum aber behält Monat/Jahr"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        "15. März 2024" → "XX. März 2024"
+        "15.03.2024" → "XX.03.2024"
+        """
+        if not text or not text.strip():
+            return "XX.XX.XXXX"
+
+        text = text.strip()
+
+        # Pattern: "15. März 2024"
+        match = re.match(r'^(\d{1,2})(\.\s*[A-Za-zä]+\s+\d{4})$', text)
+        if match:
+            rest = match.group(2)
+            return f"XX{rest}"
+
+        # Pattern: "15.03.2024"
+        match = re.match(r'^(\d{1,2})(\.\d{2}\.\d{4})$', text)
+        if match:
+            rest = match.group(2)
+            return f"XX{rest}"
+
+        # Pattern: "2024-03-15" (ISO)
+        match = re.match(r'^(\d{4})-(\d{2})-(\d{2})$', text)
+        if match:
+            year = match.group(1)
+            month = match.group(2)
+            return f"{year}-{month}-XX"
+
+        # Fallback
+        return "XX.XX.XXXX"
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "date_mask"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Maskiert Aktenzeichen (behält Jahr)
+class CaseNumberMaskOperator(Operator):
+    """Maskiert Aktenzeichen aber behält Jahr"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        "123 C 456/2024" → "*** C ***/2024"
+        "Az.: 12 Js 345/24" → "Az.: ** Js ***/24"
+        """
+        if not text or not text.strip():
+            return "*** *** ***"
+
+        text = text.strip()
+
+        # Pattern: "123 C 456/2024" oder "12 Js 345/24"
+        # Behalte Buchstaben und Jahr
+        match = re.match(r'^(Az\.?:?\s*)?(\d+)\s+([A-Z][a-z]?)\s+(\d+)/(\d{2,4})$', text)
+
+        if match:
+            prefix = match.group(1) or ""
+            letter = match.group(3)  # "C" oder "Js"
+            year = match.group(5)    # "2024" oder "24"
+
+            return f"{prefix}*** {letter} ***/{year}"
+
+        # Fallback
+        return "*** *** ***"
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "case_number_mask"
+
+    def operator_type(self) -> OperatorType:
+        return OperatorType.Anonymize
+
+
+# Custom Operator: Ersetzt Ortsnamen durch ersten Buchstaben
+class LocationFirstLetterOperator(Operator):
+    """Anonymisiert Orte zu 'PLZ X.'"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        Ersetzt Ortsnamen und PLZ durch Maskierung
+
+        "12345 Musterstadt" → "XXXXX M."
+        "Berlin" → "B."
+        """
+        if not text or not text.strip():
+            return text
+
+        text = text.strip()
+
+        # Pattern: PLZ + Stadt (z.B. "12345 Musterstadt")
+        match = re.match(r'^(\d{5})\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[a-zäöüß]+)?)$', text)
+
+        if match:
+            # PLZ maskieren mit XXXXX
+            city = match.group(2)     # "Musterstadt"
+
+            # Erster Buchstabe der Stadt
+            first_letter = city[0].upper()
+            return f"XXXXX {first_letter}."
+
+        # Kein PLZ: Nur Stadt
+        # z.B. "Berlin" → "B."
+        words = text.split()
+        if words:
+            first_letter = words[0][0].upper()
+            return f"{first_letter}."
+
+        return f"{text[0].upper()}."
+
+    def validate(self, params: Dict = None) -> None:
+        pass
+
+    def operator_name(self) -> str:
+        return "location_first_letter"
+
+    def operator_type(self) -> OperatorType:
         return OperatorType.Anonymize
 
 
@@ -106,7 +397,13 @@ class TextAnonymizer:
 
         # Lade Config und Whitelist
         try:
-            from .config_loader import get_config
+            # Versuche relativen Import (wenn als Modul importiert)
+            try:
+                from .config_loader import get_config
+            except ImportError:
+                # Fallback: Absoluter Import (wenn direkt ausgeführt)
+                from config_loader import get_config
+
             self.config = get_config()
             self.whitelist = self.config.get_whitelist()
             self.recognition_mode = self.config.get_recognition_mode()
@@ -152,26 +449,26 @@ class TextAnonymizer:
         ))
 
         # Namen (deutsche Vor- und Nachnamen)
-        # WICHTIG: Nur mit Titeln oder sehr spezifische Patterns!
+        # SEHR RESTRIKTIV: Nur mit Titeln, lange Namen werden NICHT automatisch erkannt!
         name_patterns = [
             # Mit Anrede (sehr sicher)
             Pattern(
                 name="name_with_title",
-                regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?(Prof\.\s+)?(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
+                regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?(Prof\.\s+)?(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]{2,}\s+[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
                 score=0.95
             ),
             # Mit akademischem Titel (sehr sicher)
             Pattern(
                 name="name_with_dr",
                 regex=r"\b(Dr\.|Prof\.|Prof\.\s+Dr\.)\s+[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.9
+                score=0.95
             ),
-            # Nur lange, untypische Namen (reduziert False Positives)
-            # Mindestens 4 Buchstaben pro Wort, keine Artikel/Präpositionen
+            # Nach "Herrn" oder "Frau" (sehr sicher)
+            # z.B. "namens meiner Mandantin, Frau Dr. Anna Weber"
             Pattern(
-                name="long_name",
-                regex=r"\b[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{4,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.75  # Erhöht von 0.65, damit es über Threshold (0.7) liegt
+                name="name_after_comma_title",
+                regex=r",\s+(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{3,}",
+                score=0.95
             ),
         ]
         registry.add_recognizer(PatternRecognizer(
@@ -429,8 +726,15 @@ class TextAnonymizer:
             logger.info("Initialisiere Presidio Anonymizer...")
             self.anonymizer = AnonymizerEngine()
 
-            # Registriere Custom Operator für Namen (Klasse, nicht Instanz!)
+            # Registriere Custom Operators (Klassen, nicht Instanzen!)
             self.anonymizer.add_anonymizer(FirstLetterOperator)
+            self.anonymizer.add_anonymizer(StreetFirstLetterOperator)
+            self.anonymizer.add_anonymizer(LocationFirstLetterOperator)
+            self.anonymizer.add_anonymizer(EmailMaskOperator)
+            self.anonymizer.add_anonymizer(PhoneMaskOperator)
+            self.anonymizer.add_anonymizer(IbanMaskOperator)
+            self.anonymizer.add_anonymizer(DateMaskOperator)
+            self.anonymizer.add_anonymizer(CaseNumberMaskOperator)
 
             elapsed = time.time() - start_time
             logger.info(f"Presidio erfolgreich initialisiert! ({elapsed:.1f}s)")
@@ -490,22 +794,22 @@ class TextAnonymizer:
                 text=text,
                 analyzer_results=analyzer_results,
                 operators={
-                    "DEFAULT": OperatorConfig("replace", {"new_value": "<ANONYMISIERT>"}),
-                    "PERSON": OperatorConfig("first_letter"),  # Custom: "Max" → "M."
-                    "EMAIL_ADDRESS": OperatorConfig("replace", {"new_value": "<EMAIL>"}),
-                    "PHONE_NUMBER": OperatorConfig("replace", {"new_value": "<TELEFON>"}),
-                    "STREET_ADDRESS": OperatorConfig("replace", {"new_value": "<ADRESSE>"}),
-                    "LOCATION": OperatorConfig("replace", {"new_value": "<ORT>"}),
-                    "DATE_TIME": OperatorConfig("replace", {"new_value": "<DATUM>"}),
-                    "CREDIT_CARD": OperatorConfig("replace", {"new_value": "<KREDITKARTE>"}),
-                    "IBAN_CODE": OperatorConfig("replace", {"new_value": "<IBAN>"}),
-                    "IP_ADDRESS": OperatorConfig("replace", {"new_value": "<IP-ADRESSE>"}),
-                    "URL": OperatorConfig("replace", {"new_value": "<URL>"}),
-                    "CASE_NUMBER": OperatorConfig("replace", {"new_value": "<AKTENZEICHEN>"}),
-                    "TAX_ID": OperatorConfig("replace", {"new_value": "<STEUER-ID>"}),
-                    "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "<SV-NUMMER>"}),
-                    "ID_NUMBER": OperatorConfig("replace", {"new_value": "<AUSWEIS-NR>"}),
-                    "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "<KONTO-NR>"}),
+                    "DEFAULT": OperatorConfig("replace", {"new_value": "***"}),
+                    "PERSON": OperatorConfig("first_letter"),  # Custom: "Herr Müller" → "Herr M."
+                    "STREET_ADDRESS": OperatorConfig("street_first_letter"),  # Custom: "Musterstr. 123" → "M.str. 123"
+                    "LOCATION": OperatorConfig("location_first_letter"),  # Custom: "12345 Berlin" → "XXXXX B."
+                    "EMAIL_ADDRESS": OperatorConfig("email_mask"),  # Custom: "max@firma.de" → "***@***.de"
+                    "PHONE_NUMBER": OperatorConfig("phone_mask"),  # Custom: "030 123456" → "030 XXXXXX"
+                    "DATE_TIME": OperatorConfig("date_mask"),  # Custom: "15.03.2024" → "XX.03.2024"
+                    "IBAN_CODE": OperatorConfig("iban_mask"),  # Custom: "DE89 3704..." → "DE** ****"
+                    "CASE_NUMBER": OperatorConfig("case_number_mask"),  # Custom: "123 C 456/2024" → "*** C ***/2024"
+                    "CREDIT_CARD": OperatorConfig("replace", {"new_value": "**** **** ****"}),
+                    "IP_ADDRESS": OperatorConfig("replace", {"new_value": "***.***.***.***"}),
+                    "URL": OperatorConfig("replace", {"new_value": "www.***.***"}),
+                    "TAX_ID": OperatorConfig("replace", {"new_value": "**/***/****"}),
+                    "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "** ****** * ***"}),
+                    "ID_NUMBER": OperatorConfig("replace", {"new_value": "*********"}),
+                    "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "Konto-Nr.: *******"}),
                 }
             )
 

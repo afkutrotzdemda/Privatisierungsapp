@@ -166,7 +166,13 @@ class Config:
         whitelist_config = self.config.get('whitelist', {})
         all_items = []
 
-        for category in ['court_terms', 'authorities', 'professions', 'organizations', 'common_words', 'custom']:
+        # Alle Whitelist-Kategorien
+        categories = [
+            'court_terms', 'process_parties', 'authorities', 'professions',
+            'legal_areas', 'legal_terms', 'organizations', 'common_words', 'custom'
+        ]
+
+        for category in categories:
             items = whitelist_config.get(category, [])
             all_items.extend(items)
 
