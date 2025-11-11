@@ -469,25 +469,29 @@ class TextAnonymizer:
         ))
 
         # Namen (deutsche Vor- und Nachnamen)
-        # SEHR RESTRIKTIV: Nur mit Titeln, lange Namen werden NICHT automatisch erkannt!
+        # SEHR RESTRIKTIV: Nur mit Titeln, mindestens 2+3 Zeichen!
         name_patterns = [
-            # Mit Anrede (sehr sicher)
+            # Mit Anrede + akadem. Titeln (sehr sicher) - ALLE KOMBINATIONEN!
+            # z.B. "Herr Prof. Dr. Klaus-Dieter Schneider", "Frau Dr. med. Anna-Maria Müller-Hoffmann"
+            # Vornamen: min 2 Zeichen ([A-ZÄÖÜ][a-zäöüß]{1,}  =  mind. 2 Zeichen gesamt)
+            # Nachname: min 3 Zeichen ([A-ZÄÖÜ][a-zäöüß]{2,} = mind. 3 Zeichen gesamt)
             Pattern(
-                name="name_with_title",
-                regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?(Prof\.\s+)?(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]{2,}\s+[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
+                name="name_with_title_complex",
+                regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Prof\.\s+)?(Dr\.\s+)?(med\.\s+)?(Prof\.\s+)?(Dr\.\s+)?([A-ZÄÖÜ][a-zäöüß]{1,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
                 score=0.95
             ),
-            # Mit akademischem Titel (sehr sicher)
+            # Mit akademischem Titel (ohne Anrede) - MEHRERE VORNAMEN
+            # z.B. "Dr. Heinrich Weber", "Prof. Dr. Müller"
             Pattern(
                 name="name_with_dr",
-                regex=r"\b(Dr\.|Prof\.|Prof\.\s+Dr\.)\s+[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.95
+                regex=r"\b(Prof\.\s+)?(Dr\.\s+)?(med\.\s+)?([A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
+                score=0.9
             ),
-            # Nach "Herrn" oder "Frau" (sehr sicher)
-            # z.B. "namens meiner Mandantin, Frau Dr. Anna Weber"
+            # Nach Komma mit Titel
+            # z.B. "namens meiner Mandantin, Frau Dr. Anna-Maria Weber"
             Pattern(
                 name="name_after_comma_title",
-                regex=r",\s+(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{3,}",
+                regex=r",\s+(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?(med\.\s+)?([A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
                 score=0.95
             ),
         ]
@@ -803,6 +807,30 @@ class TextAnonymizer:
             logger.error(f"Fehler beim Initialisieren von Presidio: {e}", exc_info=True)
             return False
 
+    def _normalize_multiline_names(self, text: str) -> str:
+        """
+        Normalisiert mehrzeilige Namen für bessere Erkennung
+
+        Problem: Namen mit Titel stehen auf eigener Zeile, dann kommen Details:
+        "Herr Maximilian Josef Müller-Hoffmann\n   geb. am ..."
+
+        Lösung: Entferne übermäßige Leerzeichen nach Namen
+        """
+        # Erstes Problem: Nach einem vollen Namen (Herr + Vornamen + Nachname)
+        # kommt oft ein Newline mit vielen Leerzeichen für Einrückung
+        # z.B. "Herr Max Müller\n   geb. am ..." → "Herr Max Müller geb. am ..."
+
+        # Aber: Wir wollen nur Namen-Zeilen normalisieren, nicht alles!
+        # Lösung: Ersetze "\n   " (Newline + 3+ Leerzeichen) mit einem Leerzeichen
+        # NUR wenn davor ein Nachname steht (erkennbar an Großbuchstabe-Kleinbuchstaben)
+        normalized = re.sub(
+            r'([A-ZÄÖÜ][a-zäöüß]+(-[A-ZÄÖÜ][a-zäöüß]+)?)\n\s{2,}',
+            r'\1 ',
+            text
+        )
+
+        return normalized
+
     def anonymize(self, text: str, entities_to_anonymize: Optional[List[str]] = None) -> str:
         """
         Anonymisiert den gegebenen Text
@@ -824,18 +852,23 @@ class TextAnonymizer:
                 return "FEHLER: Presidio konnte nicht initialisiert werden!"
 
         try:
-            # Analysiere Text und erkenne PII
+            # Normalisiere mehrzeilige Namen VORHER
+            text_normalized = self._normalize_multiline_names(text)
+
+            # Analysiere Text und erkenne PII (nutze normalisierten Text!)
             logger.info(f"Analysiere Text ({len(text)} Zeichen)...")
+            start_analyze = time.time()
             analyzer_results = self.analyzer.analyze(
-                text=text,
+                text=text_normalized,  # Nutze normalisierten Text für Analyse
                 language="en",  # Muss konsistent mit Registry sein
                 entities=entities_to_anonymize
             )
+            analyze_time = time.time() - start_analyze
 
-            logger.info(f"{len(analyzer_results)} PII-Entities gefunden")
+            logger.info(f"{len(analyzer_results)} PII-Entities gefunden (Analyse: {analyze_time:.2f}s)")
 
-            # Filtere Whitelist-Einträge
-            analyzer_results = self._filter_whitelist(text, analyzer_results)
+            # Filtere Whitelist-Einträge (nutze normalisierten Text!)
+            analyzer_results = self._filter_whitelist(text_normalized, analyzer_results)
             logger.info(f"{len(analyzer_results)} PII-Entities nach Whitelist-Filter")
 
             # Filtere nach Confidence-Score (konfigurierbar via config.toml)
@@ -847,11 +880,12 @@ class TextAnonymizer:
             ]
             logger.info(f"{len(analyzer_results)} PII-Entities nach Score-Filter (>={self.person_threshold} für Namen, >={self.other_threshold} für andere)")
 
-            # Anonymisiere erkannte PII
+            # Anonymisiere erkannte PII (nutze normalisierten Text!)
             # Namen werden zu "X." (erster Buchstabe + Punkt)
             # Andere werden komplett ersetzt
+            start_anonymize = time.time()
             anonymized_result = self.anonymizer.anonymize(
-                text=text,
+                text=text_normalized,  # Nutze normalisierten Text!
                 analyzer_results=analyzer_results,
                 operators={
                     "DEFAULT": OperatorConfig("replace", {"new_value": "***"}),
@@ -874,8 +908,10 @@ class TextAnonymizer:
                     "LAND_PARCEL": OperatorConfig("replace", {"new_value": "Flurstück ***/***"}),  # Flurstück
                 }
             )
+            anonymize_time = time.time() - start_anonymize
 
-            logger.info("Text erfolgreich anonymisiert")
+            total_time = analyze_time + anonymize_time
+            logger.info(f"Text erfolgreich anonymisiert (Anonymisierung: {anonymize_time:.2f}s, Gesamt: {total_time:.2f}s)")
             return anonymized_result.text
 
         except Exception as e:
