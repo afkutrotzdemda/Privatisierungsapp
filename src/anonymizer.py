@@ -157,27 +157,43 @@ class PhoneMaskOperator(Operator):
         """
         "030 12345678" → "030 XXXXXX"
         "+49 30 123456" → "+49 30 XXXXXX"
+        "030 555-1234" → "030 XXXXXX"
         """
         if not text or not text.strip():
             return "XXXXXXXXXX"
 
         text = text.strip()
 
-        # Pattern: Vorwahl + Rest
-        # z.B. "030 12345678", "+49 30 123456"
-        match = re.match(r'^(\+?\d{1,4}[\s\-/]?\d{1,4}[\s\-/]?)(.+)$', text)
+        # Pattern: Internationale Vorwahl (optional) + Ortsvorwahl
+        # z.B. "+49 30 123456", "030 12345678", "030 555-1234"
 
+        # Versuche internationale Format: +49 30 ...
+        match = re.match(r'^(\+\d{1,3})[\s\-/]?(\d{2,4})[\s\-/](.+)$', text)
         if match:
-            prefix = match.group(1).strip()  # "030" oder "+49 30"
-            rest = match.group(2)
+            country = match.group(1)  # "+49"
+            area = match.group(2)      # "30"
+            rest = match.group(3)      # Rest der Nummer
+
+            digit_count = len([c for c in rest if c.isdigit()])
+            masked = 'X' * max(digit_count, 6)
+            return f"{country} {area} {masked}"
+
+        # Nationales Format: 030 ...
+        match = re.match(r'^(0\d{1,4})[\s\-/](.+)$', text)
+        if match:
+            prefix = match.group(1)  # "030"
+            rest = match.group(2)     # "12345678" oder "555-1234"
 
             # Zähle Ziffern im Rest
             digit_count = len([c for c in rest if c.isdigit()])
             masked = 'X' * max(digit_count, 6)
-
             return f"{prefix} {masked}"
 
-        # Fallback
+        # Fallback: Nur Ziffern ohne Vorwahl
+        digit_count = len([c for c in text if c.isdigit()])
+        if digit_count >= 6:
+            return 'X' * digit_count
+
         return "XXXXXXXXXX"
 
     def validate(self, params: Dict = None) -> None:
@@ -437,10 +453,14 @@ class TextAnonymizer:
         ))
 
         # Telefon (deutsche Formate)
+        # WICHTIG: Muss auch "030 555-1234" matchen (mit Bindestrich in der Nummer)
         phone_patterns = [
+            # Mobilfunk: 0171 1234567 oder 0171-123-4567
             Pattern(name="phone_mobile", regex=r"0\d{3,4}[\s\-/]?\d{3,4}[\s\-/]?\d{3,4}", score=0.8),
+            # International: +49 30 123456 oder +49-30-123456
             Pattern(name="phone_intl", regex=r"\+49[\s\-/]?\d{2,4}[\s\-/]?\d{3,9}", score=0.8),
-            Pattern(name="phone_landline", regex=r"0\d{2,5}[\s\-/]?\d{5,9}", score=0.7),
+            # Festnetz: 030 12345678 oder 030 555-1234 (mit Bindestrich!)
+            Pattern(name="phone_landline", regex=r"0\d{2,5}[\s\-/]?(\d{3,4}[\s\-/]?)?\d{4,8}", score=0.7),
         ]
         registry.add_recognizer(PatternRecognizer(
             supported_entity="PHONE_NUMBER",
@@ -538,11 +558,33 @@ class TextAnonymizer:
         # Steuer-ID
         tax_patterns = [
             Pattern(name="steuer_id", regex=r"\b\d{11}\b", score=0.6),
-            Pattern(name="steuer_id_labeled", regex=r"\b(Steuer-ID|Steueridentifikationsnummer|St\.-Nr\.|Steuernummer):?\s*\d{10,13}\b", score=0.95),
+            Pattern(name="steuer_id_labeled", regex=r"\b(Steuer-ID|Steueridentifikationsnummer|St\.-Nr\.|Steuernummer|Steuer-Nr\.):?\s*\d{2,3}/\d{3}/\d{4,5}\b", score=0.95),
         ]
         registry.add_recognizer(PatternRecognizer(
             supported_entity="TAX_ID",
             patterns=tax_patterns,
+            supported_language="en"
+        ))
+
+        # Grundbuchnummern (Notariat)
+        grundbuch_patterns = [
+            Pattern(name="grundbuch_blatt", regex=r"\b(Grundbuch|GB)[\s\-]?(von\s+)?[A-ZÄÖÜ][a-zäöüß\-]+,?\s+(Blatt\s+)?\d{4,6}(/\d{2,4}[\-]\d{2,4})?\b", score=0.9),
+            Pattern(name="grundbuch_short", regex=r"\bGB\s+\d{4,6}/\d{2,4}[\-]\d{2,4}\b", score=0.9),
+        ]
+        registry.add_recognizer(PatternRecognizer(
+            supported_entity="PROPERTY_REF",
+            patterns=grundbuch_patterns,
+            supported_language="en"
+        ))
+
+        # Flurstück-Nummern (Kataster)
+        flurstueck_patterns = [
+            Pattern(name="flurstueck", regex=r"\b(Flurstück|Flur)\s+\d{1,4}(/\d{2,4})?\b", score=0.85),
+            Pattern(name="gemarkung", regex=r"\b(Gemarkung|Gmkg\.)\s+[A-ZÄÖÜ][a-zäöüß\-]+,\s+Flur\s+\d{1,4}\b", score=0.9),
+        ]
+        registry.add_recognizer(PatternRecognizer(
+            supported_entity="LAND_PARCEL",
+            patterns=flurstueck_patterns,
             supported_language="en"
         ))
 
@@ -622,6 +664,9 @@ class TextAnonymizer:
         """
         Filtert erkannte Entities und entfernt die, die auf der Whitelist stehen
 
+        WICHTIG: Whitelist gilt NUR für PERSON entities!
+        E-Mail, Telefon, IBAN, etc. werden IMMER anonymisiert.
+
         Args:
             text: Der Original-Text
             analyzer_results: Liste von erkannten Entities
@@ -635,7 +680,20 @@ class TextAnonymizer:
         filtered_results = []
         removed_count = 0
 
+        # Entity-Typen die IMMER anonymisiert werden (keine Whitelist-Filterung)
+        always_anonymize = {
+            "EMAIL_ADDRESS", "PHONE_NUMBER", "IBAN_CODE", "CREDIT_CARD",
+            "IP_ADDRESS", "URL", "TAX_ID", "SOCIAL_SECURITY_NUMBER",
+            "ID_NUMBER", "ACCOUNT_NUMBER", "DATE_TIME",
+            "PROPERTY_REF", "LAND_PARCEL"  # Grundbuch + Flurstück
+        }
+
         for result in analyzer_results:
+            # IMMER anonymisieren für bestimmte Typen
+            if result.entity_type in always_anonymize:
+                filtered_results.append(result)
+                continue
+
             # Extrahiere den erkannten Text
             detected_text = text[result.start:result.end]
 
@@ -646,13 +704,15 @@ class TextAnonymizer:
                 continue
 
             # Prüfe ob ein Teil eines Whitelist-Eintrags ist
+            # NUR für PERSON, LOCATION, STREET_ADDRESS
             is_whitelisted = False
-            for whitelisted_term in self.whitelist:
-                if whitelisted_term in detected_text.lower():
-                    logger.debug(f"Whitelist-Partial-Match: '{detected_text}' enthält '{whitelisted_term}'")
-                    removed_count += 1
-                    is_whitelisted = True
-                    break
+            if result.entity_type in ["PERSON", "LOCATION", "STREET_ADDRESS"]:
+                for whitelisted_term in self.whitelist:
+                    if whitelisted_term in detected_text.lower():
+                        logger.debug(f"Whitelist-Partial-Match: '{detected_text}' enthält '{whitelisted_term}'")
+                        removed_count += 1
+                        is_whitelisted = True
+                        break
 
             if not is_whitelisted:
                 filtered_results.append(result)
@@ -810,6 +870,8 @@ class TextAnonymizer:
                     "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "** ****** * ***"}),
                     "ID_NUMBER": OperatorConfig("replace", {"new_value": "*********"}),
                     "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "Konto-Nr.: *******"}),
+                    "PROPERTY_REF": OperatorConfig("replace", {"new_value": "GB ****/***-***"}),  # Grundbuch
+                    "LAND_PARCEL": OperatorConfig("replace", {"new_value": "Flurstück ***/***"}),  # Flurstück
                 }
             )
 
