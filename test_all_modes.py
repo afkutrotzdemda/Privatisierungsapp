@@ -90,7 +90,33 @@ def main():
 
     # Teste alle Modi
     results = []
-    for mode in ['fast']:  # Nur fast für jetzt (balanced/accurate brauchen spaCy)
+    modes_to_test = ['fast']  # Standard: nur fast
+
+    # Prüfe ob spaCy verfügbar ist
+    try:
+        import spacy
+        try:
+            spacy.load('de_core_news_sm')
+            modes_to_test.append('balanced')
+            print("[✓] spaCy small model gefunden - BALANCED wird getestet")
+        except:
+            print("[!] spaCy small model nicht gefunden - BALANCED wird übersprungen")
+            print("    Installiere mit: python -m spacy download de_core_news_sm")
+
+        try:
+            spacy.load('de_core_news_lg')
+            modes_to_test.append('accurate')
+            print("[✓] spaCy large model gefunden - ACCURATE wird getestet")
+        except:
+            print("[!] spaCy large model nicht gefunden - ACCURATE wird übersprungen")
+            print("    Installiere mit: python -m spacy download de_core_news_lg")
+    except ImportError:
+        print("[!] spaCy nicht installiert - nur FAST wird getestet")
+        print("    Installiere mit: pip install spacy")
+
+    print()
+
+    for mode in modes_to_test:
         result = test_mode(mode, text)
         results.append(result)
 
