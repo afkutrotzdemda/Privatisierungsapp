@@ -26,6 +26,10 @@ court_terms = [
     "Landgericht",
     "Oberlandesgericht",
     "Bundesgerichtshof",
+    "Bundesverfassungsgericht",
+    "Verwaltungsgericht",
+    "Sozialgericht",
+    "Arbeitsgericht",
 ]
 
 # Behörden
@@ -34,6 +38,11 @@ authorities = [
     "Polizei",
     "Bundesamt",
     "Krankenkasse",
+    "Bundestag",
+    "Bundesrat",
+    "Ministerium",
+    "Bundeskanzler",
+    "Bundespräsident",
 ]
 
 # Berufsbezeichnungen
@@ -42,6 +51,9 @@ professions = [
     "Notar",
     "Steuerberater",
     "Arzt",
+    "Anwalt",
+    "Staatsanwalt",
+    "Verteidiger",
 ]
 
 # Organisationen
@@ -50,6 +62,23 @@ organizations = [
     "Sparkasse",
     "AOK",
     "TÜV",
+    "Deutsche Bahn",
+    "Deutsche Post",
+]
+
+# Häufige False Positives (Artikel, Präpositionen, häufige Wörter)
+common_words = [
+    "Der",
+    "Die",
+    "Das",
+    "Im",
+    "Am",
+    "Zum",
+    "Zur",
+    "Vom",
+    "Bei",
+    "Mit",
+    "Durch",
 ]
 
 # Eigene Einträge (hier eigene Namen hinzufügen)

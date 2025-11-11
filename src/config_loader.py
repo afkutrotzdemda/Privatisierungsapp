@@ -34,6 +34,7 @@ class Config:
             'authorities': ['Finanzamt', 'Polizei', 'Bundesamt', 'Krankenkasse'],
             'professions': ['Rechtsanwalt', 'Notar', 'Steuerberater', 'Arzt'],
             'organizations': ['Deutsche Bank', 'Sparkasse', 'AOK', 'TÜV'],
+            'common_words': ['Der', 'Die', 'Das', 'Im', 'Am', 'Zum', 'Zur', 'Vom', 'Bei', 'Mit', 'Durch'],
             'custom': []
         },
         'anonymization': {
@@ -162,7 +163,7 @@ class Config:
         whitelist_config = self.config.get('whitelist', {})
         all_items = []
 
-        for category in ['court_terms', 'authorities', 'professions', 'organizations', 'custom']:
+        for category in ['court_terms', 'authorities', 'professions', 'organizations', 'common_words', 'custom']:
             items = whitelist_config.get(category, [])
             all_items.extend(items)
 

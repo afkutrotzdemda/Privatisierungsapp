@@ -99,21 +99,26 @@ class TextAnonymizer:
         ))
 
         # Namen (deutsche Vor- und Nachnamen)
+        # WICHTIG: Nur mit Titeln oder sehr spezifische Patterns!
         name_patterns = [
+            # Mit Anrede (sehr sicher)
             Pattern(
                 name="name_with_title",
                 regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Dr\.\s+)?(Prof\.\s+)?(Dr\.\s+)?[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.85
+                score=0.95
             ),
+            # Mit akademischem Titel (sehr sicher)
             Pattern(
                 name="name_with_dr",
-                regex=r"\b(Dr\.|Prof\.|Prof\.\s+Dr\.)\s+[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.8
+                regex=r"\b(Dr\.|Prof\.|Prof\.\s+Dr\.)\s+[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
+                score=0.9
             ),
+            # Nur lange, untypische Namen (reduziert False Positives)
+            # Mindestens 4 Buchstaben pro Wort, keine Artikel/Präpositionen
             Pattern(
-                name="simple_name",
-                regex=r"\b[A-ZÄÖÜ][a-zäöüß]{2,}\s+[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.6
+                name="long_name",
+                regex=r"\b[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{4,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
+                score=0.65
             ),
         ]
         registry.add_recognizer(PatternRecognizer(
@@ -370,6 +375,16 @@ class TextAnonymizer:
             # Filtere Whitelist-Einträge
             analyzer_results = self._filter_whitelist(text, analyzer_results)
             logger.info(f"{len(analyzer_results)} PII-Entities nach Whitelist-Filter")
+
+            # Filtere nach Confidence-Score (nur sichere Matches)
+            # Für Namen: Mindestens Score 0.7 (nur mit Titel oder lange Namen)
+            # Für andere: Mindestens Score 0.6
+            analyzer_results = [
+                r for r in analyzer_results
+                if (r.entity_type == "PERSON" and r.score >= 0.7) or
+                   (r.entity_type != "PERSON" and r.score >= 0.6)
+            ]
+            logger.info(f"{len(analyzer_results)} PII-Entities nach Score-Filter (>=0.7 für Namen)")
 
             # Anonymisiere erkannte PII
             anonymized_result = self.anonymizer.anonymize(
