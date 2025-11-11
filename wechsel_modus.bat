@@ -7,39 +7,46 @@
 
 chcp 65001 >nul
 color 0A
+cd /d "%~dp0"
 
 echo.
-echo ════════════════════════════════════════════════════════════════
+echo ================================================================
 echo                    ANONYMIFY - MODUS WECHSELN
-echo ════════════════════════════════════════════════════════════════
+echo ================================================================
 echo.
 echo Aktueller Modus:
 echo.
 
 :: Zeige aktuellen Modus
-findstr "recognition_mode" config.toml
+if exist config.toml (
+    findstr "recognition_mode" config.toml
+) else (
+    echo FEHLER: config.toml nicht gefunden!
+    timeout /t 3
+    exit /b 1
+)
 
 echo.
-echo ────────────────────────────────────────────────────────────────
+echo ----------------------------------------------------------------
 echo VERFÜGBARE MODI:
-echo ────────────────────────────────────────────────────────────────
+echo ----------------------------------------------------------------
 echo.
 echo [1] FAST - Schnell (~0.1s)
-echo     • Nur Pattern-Matching (kein Machine Learning)
-echo     • Perfekt für Echtzeit-Nutzung
-echo     • Empfohlen für die meisten Nutzer
+echo     - Nur Pattern-Matching (kein Machine Learning)
+echo     - Perfekt für Echtzeit-Nutzung
+echo     - Empfohlen für die meisten Nutzer
 echo.
 echo [2] BALANCED - Ausgewogen (~1s)
-echo     • Pattern + Machine Learning (spaCy klein)
-echo     • Bessere Erkennung von Namen ohne Titel
-echo     • Benötigt: pip install spacy + Modell
+echo     - Pattern + Machine Learning (spaCy klein)
+echo     - Bessere Erkennung von Namen ohne Titel
+echo     - Benoetigt: pip install spacy + Modell
 echo.
 echo [3] ACCURATE - Maximal (~2-5s)
-echo     • Pattern + großes ML-Modell
-echo     • Beste Genauigkeit
-echo     • Benötigt: großes spaCy-Modell
+echo     - Pattern + grosses ML-Modell
+echo     - Beste Genauigkeit
+echo     - Benoetigt: grosses spaCy-Modell
 echo.
-echo ────────────────────────────────────────────────────────────────
+echo ----------------------------------------------------------------
 
 set /p CHOICE="Wähle Modus (1/2/3) oder [Q] für Abbrechen: "
 
@@ -53,8 +60,13 @@ if /i "%CHOICE%"=="q" (
 if "%CHOICE%"=="1" (
     echo.
     echo [*] Wechsle zu FAST Modus...
-    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"fast\"' | Set-Content config.toml"
-    echo ✅ Modus auf FAST gesetzt!
+    powershell -ExecutionPolicy Bypass -Command "(Get-Content config.toml) -replace 'recognition_mode = \\\".*\\\"', 'recognition_mode = \\\"fast\\\"' | Set-Content config.toml"
+    if errorlevel 1 (
+        echo FEHLER: Konnte config.toml nicht aktualisieren!
+        timeout /t 3
+        exit /b 1
+    )
+    echo [OK] Modus auf FAST gesetzt!
     echo.
     echo HINWEIS: Die App muss neu gestartet werden!
     goto :end
@@ -78,23 +90,28 @@ if "%CHOICE%"=="2" (
 
         pip install spacy -q
         if errorlevel 1 (
-            echo ❌ FEHLER beim Installieren von spaCy!
+            echo [FEHLER] Konnte spaCy nicht installieren!
             timeout /t 5
             exit /b 1
         )
 
         python -m spacy download de_core_news_sm
         if errorlevel 1 (
-            echo ❌ FEHLER beim Download des Modells!
+            echo [FEHLER] Konnte Modell nicht downloaden!
             timeout /t 5
             exit /b 1
         )
 
-        echo ✅ spaCy und Modell erfolgreich installiert!
+        echo [OK] spaCy und Modell erfolgreich installiert!
     )
 
-    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"balanced\"' | Set-Content config.toml"
-    echo ✅ Modus auf BALANCED gesetzt!
+    powershell -ExecutionPolicy Bypass -Command "(Get-Content config.toml) -replace 'recognition_mode = \\\".*\\\"', 'recognition_mode = \\\"balanced\\\"' | Set-Content config.toml"
+    if errorlevel 1 (
+        echo FEHLER: Konnte config.toml nicht aktualisieren!
+        timeout /t 3
+        exit /b 1
+    )
+    echo [OK] Modus auf BALANCED gesetzt!
     echo.
     echo HINWEIS: Die App muss neu gestartet werden!
     goto :end
@@ -129,32 +146,37 @@ if "%CHOICE%"=="3" (
 
         python -m spacy download de_core_news_lg
         if errorlevel 1 (
-            echo ❌ FEHLER beim Download des Modells!
+            echo [FEHLER] Konnte Modell nicht downloaden!
             echo.
             echo HINWEIS: Wechsle auf BALANCED Modus (nutzt kleines Modell)
-            powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"balanced\"' | Set-Content config.toml"
+            powershell -ExecutionPolicy Bypass -Command "(Get-Content config.toml) -replace 'recognition_mode = \\\".*\\\"', 'recognition_mode = \\\"balanced\\\"' | Set-Content config.toml"
             timeout /t 5
             exit /b 1
         )
 
-        echo ✅ Modell erfolgreich installiert!
+        echo [OK] Modell erfolgreich installiert!
     )
 
-    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"accurate\"' | Set-Content config.toml"
-    echo ✅ Modus auf ACCURATE gesetzt!
+    powershell -ExecutionPolicy Bypass -Command "(Get-Content config.toml) -replace 'recognition_mode = \\\".*\\\"', 'recognition_mode = \\\"accurate\\\"' | Set-Content config.toml"
+    if errorlevel 1 (
+        echo FEHLER: Konnte config.toml nicht aktualisieren!
+        timeout /t 3
+        exit /b 1
+    )
+    echo [OK] Modus auf ACCURATE gesetzt!
     echo.
     echo HINWEIS: Die App muss neu gestartet werden!
     goto :end
 )
 
 echo.
-echo ❌ Ungültige Auswahl!
+echo [FEHLER] Ungueltige Auswahl!
 timeout /t 2
 exit /b 1
 
 :end
 echo.
-echo ────────────────────────────────────────────────────────────────
+echo ----------------------------------------------------------------
 echo.
 echo Möchtest du die App jetzt neu starten? [J/N]
 set /p RESTART="Eingabe: "

@@ -122,22 +122,37 @@ class StreetFirstLetterOperator(Operator):
 
 # Custom Operator: Maskiert E-Mail (behält Domain-Typ)
 class EmailMaskOperator(Operator):
-    """Maskiert E-Mail aber behält Struktur"""
+    """Maskiert E-Mail aber behält erste Buchstaben für Lesbarkeit"""
 
     def operate(self, text: str, params: Dict = None) -> str:
         """
-        "max.mueller@firma.de" → "***@***.de"
+        LESBAR: Zeigt erste Buchstaben, maskiert Rest
+        "max.mueller@firma.de" → "m***@f***.de"
+        "kontakt@anwaltskanzlei-mueller.de" → "k***@a***.de"
         """
         if not text or '@' not in text:
             return "***@***.***"
 
         local, domain = text.split('@', 1)
-        # Behalte nur TLD (.de, .com, etc.)
+
+        # Lokaler Teil: Erster Buchstabe + ***
+        if len(local) >= 1:
+            local_masked = local[0] + '***'
+        else:
+            local_masked = '***'
+
+        # Domain: Erster Buchstabe + *** + TLD
         domain_parts = domain.split('.')
         if len(domain_parts) >= 2:
-            tld = domain_parts[-1]
-            return f"***@***.{tld}"
-        return "***@***.***"
+            domain_name = domain_parts[0]
+            tld = '.'.join(domain_parts[1:])  # Alles nach erstem Punkt
+            if len(domain_name) >= 1:
+                domain_masked = domain_name[0] + '***'
+            else:
+                domain_masked = '***'
+            return f"{local_masked}@{domain_masked}.{tld}"
+
+        return f"{local_masked}@***.***"
 
     def validate(self, params: Dict = None) -> None:
         pass
@@ -155,17 +170,15 @@ class PhoneMaskOperator(Operator):
 
     def operate(self, text: str, params: Dict = None) -> str:
         """
-        "030 12345678" → "030 XXXXXX"
-        "+49 30 123456" → "+49 30 XXXXXX"
-        "030 555-1234" → "030 XXXXXX"
+        LESBAR: Zeigt erste paar Ziffern, maskiert Rest
+        "030 12345678" → "030 123***"
+        "+49 30 123456" → "+49 30 123***"
+        "0171 9876543" → "0171 987***"
         """
         if not text or not text.strip():
-            return "XXXXXXXXXX"
+            return "0***"
 
         text = text.strip()
-
-        # Pattern: Internationale Vorwahl (optional) + Ortsvorwahl
-        # z.B. "+49 30 123456", "030 12345678", "030 555-1234"
 
         # Versuche internationale Format: +49 30 ...
         match = re.match(r'^(\+\d{1,3})[\s\-/]?(\d{2,4})[\s\-/](.+)$', text)
@@ -174,9 +187,15 @@ class PhoneMaskOperator(Operator):
             area = match.group(2)      # "30"
             rest = match.group(3)      # Rest der Nummer
 
-            digit_count = len([c for c in rest if c.isdigit()])
-            masked = 'X' * max(digit_count, 6)
-            return f"{country} {area} {masked}"
+            # Extrahiere nur Ziffern aus Rest
+            digits = ''.join(c for c in rest if c.isdigit())
+            if len(digits) >= 3:
+                visible = digits[:3]  # Erste 3 Ziffern zeigen
+                masked = '***'
+            else:
+                visible = digits
+                masked = '***'
+            return f"{country} {area} {visible}{masked}"
 
         # Nationales Format: 030 ...
         match = re.match(r'^(0\d{1,4})[\s\-/](.+)$', text)
@@ -184,17 +203,22 @@ class PhoneMaskOperator(Operator):
             prefix = match.group(1)  # "030"
             rest = match.group(2)     # "12345678" oder "555-1234"
 
-            # Zähle Ziffern im Rest
-            digit_count = len([c for c in rest if c.isdigit()])
-            masked = 'X' * max(digit_count, 6)
-            return f"{prefix} {masked}"
+            # Extrahiere nur Ziffern aus Rest
+            digits = ''.join(c for c in rest if c.isdigit())
+            if len(digits) >= 3:
+                visible = digits[:3]  # Erste 3 Ziffern zeigen
+                masked = '***'
+            else:
+                visible = digits
+                masked = '***'
+            return f"{prefix} {visible}{masked}"
 
         # Fallback: Nur Ziffern ohne Vorwahl
-        digit_count = len([c for c in text if c.isdigit()])
-        if digit_count >= 6:
-            return 'X' * digit_count
+        digits = ''.join(c for c in text if c.isdigit())
+        if len(digits) >= 3:
+            return digits[:3] + '***'
 
-        return "XXXXXXXXXX"
+        return "0***"
 
     def validate(self, params: Dict = None) -> None:
         pass
@@ -208,20 +232,32 @@ class PhoneMaskOperator(Operator):
 
 # Custom Operator: Maskiert IBAN (behält Ländercode)
 class IbanMaskOperator(Operator):
-    """Maskiert IBAN aber behält Ländercode"""
+    """Maskiert IBAN aber behält Ländercode und erste Ziffern"""
 
     def operate(self, text: str, params: Dict = None) -> str:
         """
-        "DE89 3704 0044 0532 0130 00" → "DE** **** ****"
+        LESBAR: Zeigt Ländercode + erste 2 Ziffern
+        "DE89 3704 0044 0532 0130 00" → "DE89 37** ****"
+        "DE12345678901234567890" → "DE12 34** ****"
         """
         if not text or not text.strip():
             return "DE** ****"
 
-        text = text.strip()
+        # Entferne Leerzeichen für Verarbeitung
+        text_no_spaces = text.replace(' ', '').strip()
 
-        # Ländercode (erste 2 Zeichen)
-        if len(text) >= 2:
-            country = text[:2].upper()
+        # Ländercode (erste 2 Zeichen) + Prüfziffer (2 Zeichen) + erste 2 Ziffern der Bank
+        if len(text_no_spaces) >= 6:
+            country = text_no_spaces[:2].upper()  # "DE"
+            check = text_no_spaces[2:4]           # "89"
+            bank = text_no_spaces[4:6]            # "37"
+            return f"{country}{check} {bank}** ****"
+        elif len(text_no_spaces) >= 4:
+            country = text_no_spaces[:2].upper()
+            check = text_no_spaces[2:4]
+            return f"{country}{check} ** ****"
+        elif len(text_no_spaces) >= 2:
+            country = text_no_spaces[:2].upper()
             return f"{country}** **** ****"
 
         return "DE** ****"
@@ -322,13 +358,14 @@ class CaseNumberMaskOperator(Operator):
 
 # Custom Operator: Ersetzt Ortsnamen durch ersten Buchstaben
 class LocationFirstLetterOperator(Operator):
-    """Anonymisiert Orte zu 'PLZ X.'"""
+    """Anonymisiert Orte lesbar mit ersten Ziffern der PLZ"""
 
     def operate(self, text: str, params: Dict = None) -> str:
         """
-        Ersetzt Ortsnamen und PLZ durch Maskierung
+        LESBAR: Zeigt erste 3 Ziffern der PLZ + Stadtanfang
 
-        "12345 Musterstadt" → "XXXXX M."
+        "12345 Musterstadt" → "123** M."
+        "80539 München" → "805** M."
         "Berlin" → "B."
         """
         if not text or not text.strip():
@@ -336,25 +373,29 @@ class LocationFirstLetterOperator(Operator):
 
         text = text.strip()
 
-        # Pattern: PLZ + Stadt (z.B. "12345 Musterstadt")
-        match = re.match(r'^(\d{5})\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[a-zäöüß]+)?)$', text)
+        # Pattern: PLZ + Stadt (z.B. "12345 Musterstadt", "80539 München")
+        # Erweitert für Umlaute und mehrere Wörter
+        match = re.match(r'^(\d{5})\s+(.+)$', text)
 
         if match:
-            # PLZ maskieren mit XXXXX
-            city = match.group(2)     # "Musterstadt"
+            plz = match.group(1)      # "80539"
+            city = match.group(2)     # "München"
+
+            # Zeige erste 3 Ziffern der PLZ, maskiere Rest
+            plz_visible = plz[:3]
+            plz_masked = '**'
 
             # Erster Buchstabe der Stadt
             first_letter = city[0].upper()
-            return f"XXXXX {first_letter}."
+            return f"{plz_visible}{plz_masked} {first_letter}."
 
         # Kein PLZ: Nur Stadt
         # z.B. "Berlin" → "B."
-        words = text.split()
-        if words:
-            first_letter = words[0][0].upper()
-            return f"{first_letter}."
+        # Aber NICHT wenn es mit Ziffer anfängt!
+        if text and not text[0].isdigit():
+            return f"{text[0].upper()}."
 
-        return f"{text[0].upper()}."
+        return "***"
 
     def validate(self, params: Dict = None) -> None:
         pass
@@ -480,11 +521,12 @@ class TextAnonymizer:
                 regex=r"\b(Herr|Frau|Hr\.|Fr\.|Herrn)\s+(Prof\.\s+)?(Dr\.\s+)?(med\.\s+)?(Prof\.\s+)?(Dr\.\s+)?([A-ZÄÖÜ][a-zäöüß]{1,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
                 score=0.95
             ),
-            # Mit akademischem Titel (ohne Anrede) - MEHRERE VORNAMEN
+            # Mit akademischem Titel (ohne Anrede) - MINDESTENS Dr. oder Prof. MUSS dabei sein!
             # z.B. "Dr. Heinrich Weber", "Prof. Dr. Müller"
+            # WICHTIG: (Prof\.|Dr\.|med\.) ist NICHT optional → mindestens einer MUSS da sein!
             Pattern(
                 name="name_with_dr",
-                regex=r"\b(Prof\.\s+)?(Dr\.\s+)?(med\.\s+)?([A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{3,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
+                regex=r"\b(Prof\.\s+|Dr\.\s+|Prof\.\s+Dr\.\s+|Dr\.\s+med\.\s+)([A-ZÄÖÜ][a-zäöüß]{1,}(-[A-ZÄÖÜ][a-zäöüß]+)?\s+)*[A-ZÄÖÜ][a-zäöüß]{2,}(-[A-ZÄÖÜ][a-zäöüß]+)?",
                 score=0.9
             ),
             # Nach Komma mit Titel
@@ -707,13 +749,19 @@ class TextAnonymizer:
                 removed_count += 1
                 continue
 
-            # Prüfe ob ein Teil eines Whitelist-Eintrags ist
+            # Prüfe ob ein GANZES WORT aus der Whitelist enthalten ist
             # NUR für PERSON, LOCATION, STREET_ADDRESS
+            # WICHTIG: Nur ganze Wörter matchen, nicht Substrings!
+            # z.B. "Bundestag" matched, aber "im" matched NICHT in "Maximilian"
             is_whitelisted = False
             if result.entity_type in ["PERSON", "LOCATION", "STREET_ADDRESS"]:
+                # Extrahiere Wörter aus dem erkannten Text (case-insensitive)
+                detected_words = set(re.findall(r'\b\w+\b', detected_text.lower()))
+
                 for whitelisted_term in self.whitelist:
-                    if whitelisted_term in detected_text.lower():
-                        logger.debug(f"Whitelist-Partial-Match: '{detected_text}' enthält '{whitelisted_term}'")
+                    # Prüfe ob der Whitelist-Term als ganzes Wort vorkommt
+                    if whitelisted_term in detected_words:
+                        logger.debug(f"Whitelist-Word-Match: '{detected_text}' enthält Wort '{whitelisted_term}'")
                         removed_count += 1
                         is_whitelisted = True
                         break
@@ -923,23 +971,24 @@ class TextAnonymizer:
                 analyzer_results=analyzer_results,
                 operators={
                     "DEFAULT": OperatorConfig("replace", {"new_value": "***"}),
-                    "PERSON": OperatorConfig("first_letter"),  # Custom: "Herr Müller" → "Herr M."
-                    "STREET_ADDRESS": OperatorConfig("street_first_letter"),  # Custom: "Musterstr. 123" → "M.str. 123"
-                    "LOCATION": OperatorConfig("location_first_letter"),  # Custom: "12345 Berlin" → "XXXXX B."
-                    "EMAIL_ADDRESS": OperatorConfig("email_mask"),  # Custom: "max@firma.de" → "***@***.de"
-                    "PHONE_NUMBER": OperatorConfig("phone_mask"),  # Custom: "030 123456" → "030 XXXXXX"
-                    "DATE_TIME": OperatorConfig("date_mask"),  # Custom: "15.03.2024" → "XX.03.2024"
-                    "IBAN_CODE": OperatorConfig("iban_mask"),  # Custom: "DE89 3704..." → "DE** ****"
-                    "CASE_NUMBER": OperatorConfig("case_number_mask"),  # Custom: "123 C 456/2024" → "*** C ***/2024"
-                    "CREDIT_CARD": OperatorConfig("replace", {"new_value": "**** **** ****"}),
-                    "IP_ADDRESS": OperatorConfig("replace", {"new_value": "***.***.***.***"}),
-                    "URL": OperatorConfig("replace", {"new_value": "www.***.***"}),
-                    "TAX_ID": OperatorConfig("replace", {"new_value": "**/***/****"}),
-                    "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "** ****** * ***"}),
-                    "ID_NUMBER": OperatorConfig("replace", {"new_value": "*********"}),
-                    "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "Konto-Nr.: *******"}),
-                    "PROPERTY_REF": OperatorConfig("replace", {"new_value": "GB ****/***-***"}),  # Grundbuch
-                    "LAND_PARCEL": OperatorConfig("replace", {"new_value": "Flurstück ***/***"}),  # Flurstück
+                    # LESBAR: Erste Buchstaben bleiben sichtbar für Kontext
+                    "PERSON": OperatorConfig("first_letter"),  # "Herr Müller" → "Herr M."
+                    "STREET_ADDRESS": OperatorConfig("street_first_letter"),  # "Musterstr. 123" → "M.str. 123"
+                    "LOCATION": OperatorConfig("location_first_letter"),  # "12345 Berlin" → "XXXXX B."
+                    "EMAIL_ADDRESS": OperatorConfig("email_mask"),  # "max@firma.de" → "m***@f***.de"
+                    "PHONE_NUMBER": OperatorConfig("phone_mask"),  # "030 12345678" → "030 123***"
+                    "DATE_TIME": OperatorConfig("date_mask"),  # "15.03.2024" → "XX.03.2024"
+                    "IBAN_CODE": OperatorConfig("iban_mask"),  # "DE89 3704..." → "DE89 37** ****"
+                    "CASE_NUMBER": OperatorConfig("case_number_mask"),  # "123 C 456/2024" → "*** C ***/2024"
+                    "CREDIT_CARD": OperatorConfig("replace", {"new_value": "**** **** **** ****"}),
+                    "IP_ADDRESS": OperatorConfig("replace", {"new_value": "192.168.***.***"}),  # Behält erste 2 Oktette
+                    "URL": OperatorConfig("replace", {"new_value": "https://***.***"}),
+                    "TAX_ID": OperatorConfig("replace", {"new_value": "***/***/****"}),
+                    "SOCIAL_SECURITY_NUMBER": OperatorConfig("replace", {"new_value": "****** ****"}),
+                    "ID_NUMBER": OperatorConfig("replace", {"new_value": "***"}),
+                    "ACCOUNT_NUMBER": OperatorConfig("replace", {"new_value": "Konto ***"}),
+                    "PROPERTY_REF": OperatorConfig("replace", {"new_value": "GB ***"}),  # Grundbuch
+                    "LAND_PARCEL": OperatorConfig("replace", {"new_value": "Flurstück ***"}),  # Flurstück
                 }
             )
             anonymize_time = time.time() - start_anonymize
