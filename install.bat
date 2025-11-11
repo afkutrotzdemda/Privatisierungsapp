@@ -16,7 +16,7 @@ REM ============================================================================
 
 echo.
 echo ====================================================================
-echo     TEXT ANONYMISIERER - INSTALLATION
+echo     ANONYMIFY - INSTALLATION
 echo ====================================================================
 echo.
 echo     Automatische Installation fuer Windows
