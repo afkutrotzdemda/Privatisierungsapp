@@ -60,7 +60,36 @@ if exist venv (
 ) else (
     python -m venv venv
     if errorlevel 1 (
+        echo.
+        echo ====================================================================
         echo [FEHLER] Konnte virtuelle Umgebung nicht erstellen!
+        echo ====================================================================
+        echo.
+        echo HAEUFIGE URSACHEN:
+        echo   - Python vom Windows Store installiert
+        echo   - pip fehlt in Python-Installation
+        echo   - Alte Python-Version
+        echo   - Berechtigungsprobleme
+        echo.
+        echo LOESUNG 1 - Python neu installieren ^(EMPFOHLEN^):
+        echo   1. Python deinstallieren ^(Windows Einstellungen -^> Apps^)
+        echo   2. Von python.org neu installieren: https://www.python.org/downloads/
+        echo   3. Version 3.10 oder 3.11 waehlen ^(NICHT Windows Store!^)
+        echo   4. Bei Installation "Add Python to PATH" anhaken
+        echo   5. install.bat erneut ausfuehren
+        echo.
+        echo LOESUNG 2 - Ohne virtuelle Umgebung installieren:
+        echo   1. Schliesse dieses Fenster
+        echo   2. Fuehre install_global.bat aus
+        echo   3. Dependencies werden global installiert
+        echo.
+        echo LOESUNG 3 - pip manuell installieren:
+        echo   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        echo   python get-pip.py
+        echo   Dann install.bat erneut ausfuehren
+        echo.
+        echo ====================================================================
+        echo.
         pause
         exit /b 1
     )

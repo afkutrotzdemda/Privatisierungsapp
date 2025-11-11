@@ -86,6 +86,54 @@ Falls noch nicht vorhanden:
 
 ---
 
+### ❌ **"Konnte virtuelle Umgebung nicht erstellen" / ensurepip Fehler**
+
+**Problem:** Python kann pip nicht in venv installieren.
+
+**Häufige Ursachen:**
+- Python vom Windows Store (hat oft kein pip)
+- Python-Installation unvollständig
+- Alte Python-Version
+- Berechtigungsprobleme
+
+**Lösung 1 - Python neu installieren (EMPFOHLEN):**
+```
+1. Python DEINSTALLIEREN:
+   Windows Einstellungen → Apps → Python → Deinstallieren
+
+2. Python NEU installieren:
+   - Download: https://www.python.org/downloads/
+   - Version 3.10 oder 3.11 (NICHT Windows Store!)
+
+3. Bei Installation WICHTIG:
+   ✅ "Add Python to PATH" anhaken
+   ✅ "Install pip" anhaken
+   ✅ "Customize installation" → Alle Optionen aktivieren
+
+4. Nach Installation testen:
+   - CMD öffnen
+   - python --version (sollte Python 3.x.x zeigen)
+   - pip --version (sollte pip 23.x oder höher zeigen)
+
+5. install.bat erneut ausführen
+```
+
+**Lösung 2 - Ohne virtuelle Umgebung installieren:**
+```
+1. Führe install_global.bat aus
+2. Dependencies werden global installiert
+3. Nutze start_global.bat zum Starten
+```
+
+**Lösung 3 - pip manuell installieren:**
+```
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py
+install.bat erneut ausführen
+```
+
+---
+
 ### ❌ **Hotkey funktioniert nicht**
 
 **Problem:** Programm läuft nicht als Administrator.
