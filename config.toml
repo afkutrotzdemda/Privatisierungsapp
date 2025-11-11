@@ -1,0 +1,219 @@
+# Anonymify Konfiguration
+# =======================
+
+[hotkey]
+# Tastenkombination für Anonymisierung
+# Format: "modifier1+modifier2+key"
+# Mögliche Modifier: ctrl, alt, shift, win
+# Beispiele:
+#   "ctrl+alt+a"      - Standard
+#   "ctrl+shift+a"    - Alternative
+#   "win+a"           - Windows-Taste + A
+#   "ctrl+alt+x"      - Andere Taste
+combination = "ctrl+alt+a"
+
+[whitelist]
+# Namen die NICHT anonymisiert werden sollen
+# Nützlich für allgemeine Begriffe, Organisationen, etc.
+# Groß-/Kleinschreibung wird ignoriert
+
+# Gerichtsbegriffe
+court_terms = [
+    "Gericht",
+    "Richter",
+    "Richterin",
+    "Staatsanwaltschaft",
+    "Amtsgericht",
+    "Landgericht",
+    "Oberlandesgericht",
+    "Bundesgerichtshof",
+    "Bundesverfassungsgericht",
+    "Verwaltungsgericht",
+    "Sozialgericht",
+    "Arbeitsgericht",
+    "Familiengericht",
+    "Finanzgericht",
+    "Berufung",
+    "Revision",
+    "Rechtsmittel",
+    "Urteil",
+    "Beschluss",
+    "Verfügung",
+    "Verhandlung",
+    "Anhörung",
+    "Sitzung",
+    "Kammer",
+    "Senat",
+    "Instanz",
+]
+
+# Prozessbeteiligte (nicht anonymisieren - allgemeine Begriffe)
+process_parties = [
+    "Kläger",
+    "Klägerin",
+    "Beklagte",
+    "Beklagter",
+    "Angeklagte",
+    "Angeklagter",
+    "Zeuge",
+    "Zeugin",
+    "Gutachter",
+    "Gutachterin",
+    "Sachverständige",
+    "Sachverständiger",
+    "Partei",
+    "Gegenseite",
+    "Mandant",
+    "Mandantin",
+    "Vertragspartei",
+]
+
+# Behörden
+authorities = [
+    "Finanzamt",
+    "Polizei",
+    "Bundesamt",
+    "Krankenkasse",
+    "Bundestag",
+    "Bundesrat",
+    "Ministerium",
+    "Bundeskanzler",
+    "Bundespräsident",
+    "Gerichtsvollzieher",
+    "Gerichtsvollzieherin",
+    "Insolvenzverwalter",
+    "Insolvenzverwalterin",
+    "Urkundsbeamter",
+    "Urkundsbeamtin",
+]
+
+# Berufsbezeichnungen
+professions = [
+    "Rechtsanwalt",
+    "Rechtsanwältin",
+    "Notar",
+    "Notarin",
+    "Steuerberater",
+    "Steuerberaterin",
+    "Arzt",
+    "Ärztin",
+    "Anwalt",
+    "Anwältin",
+    "Staatsanwalt",
+    "Staatsanwältin",
+    "Verteidiger",
+    "Verteidigerin",
+]
+
+# Rechtsgebiete
+legal_areas = [
+    "Strafrecht",
+    "Zivilrecht",
+    "Verwaltungsrecht",
+    "Familienrecht",
+    "Arbeitsrecht",
+    "Erbrecht",
+    "Mietrecht",
+    "Gesellschaftsrecht",
+    "Handelsrecht",
+    "Steuerrecht",
+    "Vertragsrecht",
+    "Verkehrsrecht",
+]
+
+# Rechtliche Begriffe
+legal_terms = [
+    "Vollmacht",
+    "Anspruch",
+    "Forderung",
+    "Schadensersatz",
+    "Schmerzensgeld",
+    "Vergleich",
+    "Vollstreckung",
+    "Mahnung",
+    "Verjährung",
+    "Klage",
+    "Widerspruch",
+    "Einspruch",
+    "Beschwerde",
+    "Antrag",
+]
+
+# Organisationen
+organizations = [
+    "Deutsche Bank",
+    "Sparkasse",
+    "AOK",
+    "TÜV",
+    "Deutsche Bahn",
+    "Deutsche Post",
+]
+
+# Häufige False Positives (Artikel, Präpositionen, häufige Wörter)
+common_words = [
+    "Der",
+    "Die",
+    "Das",
+    "Im",
+    "Am",
+    "Zum",
+    "Zur",
+    "Vom",
+    "Bei",
+    "Mit",
+    "Durch",
+]
+
+# Eigene Einträge (hier eigene Namen hinzufügen)
+custom = [
+    # Beispiel: "Musterstadt GmbH",
+]
+
+[anonymization]
+# Anonymisierungs-Einstellungen
+
+# Erkennungs-Modus:
+# "fast"     = Nur Pattern-Matching (schnell, ~0.1s, weniger genau)
+# "accurate" = Pattern + Machine Learning (langsam, ~2-5s, sehr genau)
+# "balanced" = Pattern + leichtes ML (mittel, ~1s, gute Balance)
+recognition_mode = "fast"
+
+# Score-Thresholds (nur für "fast" Modus relevant)
+# Je höher, desto weniger wird anonymisiert (weniger False Positives)
+person_score_threshold = 0.7   # Namen: 0.7 = Standard, 0.8 = strenger, 0.6 = lockerer
+other_score_threshold = 0.6    # Andere (E-Mail, IBAN, etc.)
+
+# Entities die anonymisiert werden sollen (true = aktiv)
+# Deaktivieren Sie Entities die Sie NICHT anonymisieren wollen
+enable_person = true           # Namen von Personen
+enable_email = true            # E-Mail Adressen
+enable_phone = true            # Telefonnummern
+enable_address = true          # Straßenadressen
+enable_location = true         # Städte/PLZ
+enable_date = true             # Datum
+enable_iban = true             # IBAN
+enable_account_number = true   # Kontonummern
+enable_case_number = true      # Aktenzeichen
+enable_tax_id = true           # Steuer-IDs
+enable_social_security = true  # Sozialversicherung
+enable_id_number = true        # Personalausweis
+enable_credit_card = true      # Kreditkarten
+enable_ip_address = true       # IP Adressen
+enable_url = true              # URLs
+
+[advanced]
+# Erweiterte Einstellungen
+
+# Log-Level (DEBUG, INFO, WARNING, ERROR)
+log_level = "INFO"
+
+# Icon-Farben (Hex-Codes)
+icon_color_ready = "#4CAF50"    # Grün
+icon_color_working = "#FFC107"  # Gelb
+icon_color_error = "#F44336"    # Rot
+
+# Verzögerung nach Strg+C in Millisekunden
+clipboard_delay_ms = 200
+
+# Auto-Fehler-Reset in Sekunden
+error_reset_seconds = 3

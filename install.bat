@@ -16,7 +16,7 @@ REM ============================================================================
 
 echo.
 echo ====================================================================
-echo     TEXT ANONYMISIERER - INSTALLATION
+echo     ANONYMIFY - INSTALLATION
 echo ====================================================================
 echo.
 echo     Automatische Installation fuer Windows
@@ -60,7 +60,36 @@ if exist venv (
 ) else (
     python -m venv venv
     if errorlevel 1 (
+        echo.
+        echo ====================================================================
         echo [FEHLER] Konnte virtuelle Umgebung nicht erstellen!
+        echo ====================================================================
+        echo.
+        echo HAEUFIGE URSACHEN:
+        echo   - Python vom Windows Store installiert
+        echo   - pip fehlt in Python-Installation
+        echo   - Alte Python-Version
+        echo   - Berechtigungsprobleme
+        echo.
+        echo LOESUNG 1 - Python neu installieren ^(EMPFOHLEN^):
+        echo   1. Python deinstallieren ^(Windows Einstellungen -^> Apps^)
+        echo   2. Von python.org neu installieren: https://www.python.org/downloads/
+        echo   3. Version 3.10 oder 3.11 waehlen ^(NICHT Windows Store!^)
+        echo   4. Bei Installation "Add Python to PATH" anhaken
+        echo   5. install.bat erneut ausfuehren
+        echo.
+        echo LOESUNG 2 - Ohne virtuelle Umgebung installieren:
+        echo   1. Schliesse dieses Fenster
+        echo   2. Fuehre install_global.bat aus
+        echo   3. Dependencies werden global installiert
+        echo.
+        echo LOESUNG 3 - pip manuell installieren:
+        echo   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        echo   python get-pip.py
+        echo   Dann install.bat erneut ausfuehren
+        echo.
+        echo ====================================================================
+        echo.
         pause
         exit /b 1
     )
@@ -114,14 +143,27 @@ REM ============================================================================
 echo [4/5] Auto-Start einrichten...
 echo.
 echo Soll die App automatisch mit Windows starten?
-echo     (Empfohlen fuer die beste Benutzererfahrung)
+echo.
+echo WICHTIG: Der globale Hotkey braucht Administrator-Rechte!
+echo.
+echo OPTION 1: Startup-Ordner (OHNE Admin-Rechte)
+echo     + Einfach einzurichten
+echo     - Hotkey funktioniert evtl. NICHT ohne Admin
+echo.
+echo OPTION 2: Task Scheduler (MIT Admin-Rechten)
+echo     + Hotkey funktioniert zuverlaessig
+echo     - Benoetigt Admin-Rechte bei der Einrichtung
+echo     - Fuer Fortgeschrittene Benutzer
+echo.
+echo OPTION 3: Manuell starten
+echo     - Keine Auto-Start, einfach 'start.bat' ausfuehren
 echo.
 
-set /p AUTOSTART="Auto-Start aktivieren? (j/n): "
+set /p AUTOSTART_CHOICE="Waehle Option (1/2/3): "
 
-if /i "%AUTOSTART%"=="j" (
+if "%AUTOSTART_CHOICE%"=="1" (
     echo.
-    echo     - Richte Auto-Start ein...
+    echo     - Richte Auto-Start via Startup-Ordner ein...
 
     REM Erstelle Verknuepfung im Autostart-Ordner
     set STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
@@ -134,20 +176,89 @@ if /i "%AUTOSTART%"=="j" (
         echo [WARNUNG] Konnte Auto-Start nicht einrichten
         echo            Bitte manuell eine Verknuepfung erstellen
     ) else (
-        echo [OK] Auto-Start eingerichtet!
-        echo      Die App startet jetzt automatisch mit Windows.
+        echo [OK] Auto-Start eingerichtet (Startup-Ordner)!
+        echo.
+        echo WICHTIG: Die App laeuft OHNE Admin-Rechte!
+        echo          Rechtsklick auf start.bat -^> "Als Administrator ausfuehren"
+        echo          um den Hotkey zum Laufen zu bringen.
     )
+) else if "%AUTOSTART_CHOICE%"=="2" (
+    echo.
+    echo     - Starte setup_admin_autostart.bat fuer Task Scheduler...
+    echo.
+    echo WICHTIG: Du musst setup_admin_autostart.bat ALS ADMINISTRATOR ausfuehren!
+    echo          Rechtsklick -^> "Als Administrator ausfuehren"
+    echo.
+    call setup_admin_autostart.bat
 ) else (
     echo [INFO] Auto-Start uebersprungen
     echo       Du kannst die App manuell mit 'start.bat' starten
+    echo       TIPP: Rechtsklick -^> "Als Administrator ausfuehren"
 )
 echo.
 
 REM ============================================================================
-REM SCHRITT 5: ABSCHLUSS
+REM SCHRITT 5: ERKENNUNGS-MODUS WAEHLEN
 REM ============================================================================
 
-echo [5/5] Installation abgeschlossen!
+echo [5/6] Erkennungs-Modus waehlen...
+echo.
+echo Wie genau soll die Namen-Erkennung sein?
+echo.
+echo OPTION 1: SCHNELL (empfohlen fuer Echtzeit)
+echo     + Sehr schnell (~0.1 Sekunden)
+echo     - Etwas weniger genau
+echo     - Keine zusaetzlichen Downloads
+echo.
+echo OPTION 2: GENAU (empfohlen bei vielen Fehlern)
+echo     + Sehr genau (Machine Learning)
+echo     - Etwas langsamer (~1 Sekunde)
+echo     + Laedt automatisch ML-Modell (50 MB)
+echo.
+echo OPTION 3: MAXIMUM (beste Genauigkeit)
+echo     + Maximale Genauigkeit
+echo     - Langsamer (~2-5 Sekunden)
+echo     + Laedt großes ML-Modell (100 MB)
+echo.
+
+set /p MODE_CHOICE="Waehle Modus (1/2/3): "
+
+if "%MODE_CHOICE%"=="1" (
+    echo.
+    echo     - Setze Modus auf: SCHNELL
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"fast\"' | Set-Content config.toml"
+    echo [OK] Modus 'fast' gewaehlt
+) else if "%MODE_CHOICE%"=="2" (
+    echo.
+    echo     - Setze Modus auf: GENAU
+    echo     - Installiere spaCy...
+    call venv\Scripts\activate.bat
+    pip install spacy -q
+    echo     - Lade deutsches ML-Modell (50 MB, kann 2-3 Min dauern)...
+    python -m spacy download de_core_news_sm
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"balanced\"' | Set-Content config.toml"
+    echo [OK] Modus 'balanced' gewaehlt + ML-Modell installiert!
+) else if "%MODE_CHOICE%"=="3" (
+    echo.
+    echo     - Setze Modus auf: MAXIMUM
+    echo     - Installiere spaCy...
+    call venv\Scripts\activate.bat
+    pip install spacy -q
+    echo     - Lade großes deutsches ML-Modell (100 MB, kann 5-10 Min dauern)...
+    python -m spacy download de_core_news_lg
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"accurate\"' | Set-Content config.toml"
+    echo [OK] Modus 'accurate' gewaehlt + großes ML-Modell installiert!
+) else (
+    echo [INFO] Keine Auswahl, nutze Standard (SCHNELL)
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"fast\"' | Set-Content config.toml"
+)
+echo.
+
+REM ============================================================================
+REM SCHRITT 6: ABSCHLUSS
+REM ============================================================================
+
+echo [6/6] Installation abgeschlossen!
 echo.
 echo ====================================================================
 echo     INSTALLATION ERFOLGREICH!
@@ -156,20 +267,24 @@ echo.
 echo Die App ist jetzt installiert und einsatzbereit.
 echo.
 echo VERWENDUNG:
-echo     1. Starte die App mit: start.bat
+echo     1. Starte die App: Rechtsklick start.bat -^> "Als Administrator"
 echo     2. Das "A"-Icon erscheint in der Taskleiste
-echo     3. Kopiere Text (Strg+C)
-echo     4. Druecke Strg+Alt+A zum Anonymisieren
+echo     3. Markiere Text in beliebiger App
+echo     4. Druecke Strg+Alt+A (automatisch kopiert + anonymisiert!)
 echo     5. Fuege anonymisierten Text ein (Strg+V)
 echo.
 echo ICON-FARBEN:
 echo     GRUEN  = Bereit
 echo     GELB   = Anonymisiert gerade...
-echo     ROT    = Fehler (3 Sek, dann zurueck zu Gruen)
+echo     ROT    = Fehler
+echo.
+echo KONFIGURATION:
+echo     - Hotkey aendern: config.toml bearbeiten
+echo     - Whitelist: Namen in config.toml hinzufuegen
 echo.
 echo TIPPS:
 echo     - Die App laeuft im Hintergrund
-echo     - Klick auf das Icon zeigt das Menue
+echo     - Klick auf Icon zeigt aktuellen Hotkey
 echo     - Zum Beenden: Rechtsklick Icon -^> Beenden
 echo.
 echo ====================================================================

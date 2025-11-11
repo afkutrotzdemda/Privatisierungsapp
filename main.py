@@ -7,6 +7,8 @@ Drücke Strg+Alt+A um Text aus der Zwischenablage zu anonymisieren.
 import sys
 import logging
 import threading
+import ctypes
+import platform
 from src.anonymizer import get_anonymizer
 from src.hotkey_handler import HotkeyHandler
 from src.tray_icon import TrayIcon
@@ -24,6 +26,43 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def is_admin():
+    """Prüft ob das Programm mit Admin-Rechten läuft (nur Windows)"""
+    if platform.system() != "Windows":
+        return True  # Auf anderen Systemen nicht relevant
+
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
+def check_admin_rights():
+    """Gibt Warnung aus wenn keine Admin-Rechte vorhanden sind"""
+    if not is_admin():
+        logger.warning("=" * 60)
+        logger.warning("WARNUNG: Programm läuft NICHT als Administrator!")
+        logger.warning("=" * 60)
+        logger.warning("")
+        logger.warning("Der globale Hotkey (Strg+Alt+A) funktioniert möglicherweise")
+        logger.warning("nicht richtig ohne Administrator-Rechte.")
+        logger.warning("")
+        logger.warning("LÖSUNG:")
+        logger.warning("  1. Beende das Programm")
+        logger.warning("  2. Rechtsklick auf start.bat")
+        logger.warning("  3. Wähle 'Als Administrator ausführen'")
+        logger.warning("")
+        logger.warning("=" * 60)
+        logger.warning("")
+
+        # Gebe dem Benutzer 5 Sekunden zum Lesen
+        import time
+        time.sleep(5)
+
+        return False
+    return True
+
+
 class TextAnonymizerApp:
     """Hauptanwendung"""
 
@@ -39,10 +78,37 @@ class TextAnonymizerApp:
         logger.info("Anonymify wird gestartet...")
         logger.info("=" * 60)
 
+        # Prüfe Admin-Rechte (für keyboard library)
+        has_admin = check_admin_rights()
+        if not has_admin:
+            logger.info("Fahre trotzdem fort, aber Hotkey funktioniert evtl. nicht...")
+            logger.info("")
+
         # Initialisiere Presidio
         logger.info("Initialisiere Presidio (kann beim ersten Start etwas dauern)...")
-        if not self.anonymizer.initialize():
-            logger.error("Fehler beim Initialisieren von Presidio!")
+        try:
+            if not self.anonymizer.initialize():
+                logger.error("=" * 60)
+                logger.error("FEHLER: Presidio konnte nicht initialisiert werden!")
+                logger.error("=" * 60)
+                logger.error("")
+                logger.error("Mögliche Lösungen:")
+                logger.error("  1. Führe install.bat erneut aus")
+                logger.error("  2. Überprüfe Internet-Verbindung")
+                logger.error("  3. Prüfe anonymizer.log für Details")
+                logger.error("")
+                logger.error("=" * 60)
+                return False
+        except Exception as e:
+            logger.error("=" * 60)
+            logger.error("KRITISCHER FEHLER beim Initialisieren!")
+            logger.error("=" * 60)
+            logger.error(f"Fehler: {e}")
+            logger.error("")
+            logger.error("Bitte führe install.bat erneut aus oder erstelle ein")
+            logger.error("GitHub Issue mit dem Inhalt von anonymizer.log")
+            logger.error("")
+            logger.error("=" * 60)
             return False
 
         # Erstelle Tray Icon
@@ -64,10 +130,27 @@ class TextAnonymizerApp:
             # Initialisiere
             if not self.initialize():
                 logger.error("Initialisierung fehlgeschlagen!")
+                logger.error("Programm wird beendet.")
+                input("\nDrücke Enter zum Beenden...")
                 return
 
             # Starte Hotkey Handler
-            self.hotkey_handler.start()
+            try:
+                self.hotkey_handler.start()
+            except Exception as e:
+                logger.error("=" * 60)
+                logger.error("FEHLER: Hotkey konnte nicht registriert werden!")
+                logger.error("=" * 60)
+                logger.error(f"Fehler: {e}")
+                logger.error("")
+                logger.error("Mögliche Lösungen:")
+                logger.error("  1. Starte als Administrator (Rechtsklick -> Als Administrator ausführen)")
+                logger.error("  2. Überprüfe ob eine andere App Strg+Alt+A verwendet")
+                logger.error("  3. Starte Windows neu")
+                logger.error("")
+                logger.error("=" * 60)
+                input("\nDrücke Enter zum Beenden...")
+                return
 
             logger.info("=" * 60)
             logger.info("Anonymify läuft!")

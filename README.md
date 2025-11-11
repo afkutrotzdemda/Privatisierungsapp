@@ -1,14 +1,16 @@
 # Anonymify für Windows
 
-Ein Windows-Tool zum schnellen Anonymisieren von Texten mit **Strg+Alt+A**.
+Ein Windows-Tool zum schnellen Anonymisieren von Texten mit **konfigurierbarem Hotkey** (Standard: Strg+Alt+A).
 
-## Features
+## ✨ Features
 
-- **Globaler Hotkey**: Strg+Alt+A anonymisiert automatisch Text aus der Zwischenablage
-- **Microsoft Presidio**: Professionelle PII-Erkennung und Anonymisierung
-- **System Tray Icon**: Läuft diskret im Hintergrund
-- **Deutsche Sprache**: Optimiert für deutsche Texte
-- **Automatische Erkennung**: Namen, E-Mails, Telefonnummern, Adressen, Daten, etc.
+- **🎯 Konfigurierbarer Hotkey**: Standard Strg+Alt+A, aber änderbar in `config.toml`
+- **📝 Whitelist**: Namen die NICHT anonymisiert werden sollen (z.B. "Gericht", "Richter")
+- **🤖 Microsoft Presidio**: Professionelle PII-Erkennung und Anonymisierung
+- **🖥️ System Tray Icon**: Läuft diskret im Hintergrund mit Farbwechsel-Status
+- **🇩🇪 Deutsche Sprache**: Optimiert für deutsche Texte (Anwalts-Patterns!)
+- **🔍 Erweiterte Erkennung**: Namen (mit Titeln), Adressen, Aktenzeichen, IBAN, Kontonummern, etc.
+- **⚡ Automatischer Workflow**: Nur Text markieren + Hotkey → fertig!
 
 ## Workflow
 
@@ -19,48 +21,35 @@ Ein Windows-Tool zum schnellen Anonymisieren von Texten mit **Strg+Alt+A**.
 
 **Noch einfacher!** Du musst nicht mehr Strg+C drücken - nur markieren und Strg+Alt+A!
 
-## Installation
+## 🚀 Schnellstart Installation
 
 ### Voraussetzungen
 
 - Windows 10/11
-- Python 3.8 oder höher
-- Administrator-Rechte (für globale Hotkeys)
+- Python 3.8+ ([Download](https://www.python.org/downloads/))
+- Admin-Rechte (für globale Hotkeys)
 
-### Schritt 1: Python installieren
-
-Falls noch nicht vorhanden:
-1. Download von [python.org](https://www.python.org/downloads/)
-2. Bei Installation "Add Python to PATH" aktivieren
-
-### Schritt 2: Projekt einrichten
+### ⚡ Automatische Installation (EMPFOHLEN)
 
 ```bash
-# Repository klonen oder herunterladen
+# 1. Repository klonen oder ZIP herunterladen
 git clone <repository-url>
 cd Privatisierungsapp
 
-# Virtuelle Umgebung erstellen (empfohlen)
-python -m venv venv
-
-# Virtuelle Umgebung aktivieren
-venv\Scripts\activate
-
-# Dependencies installieren
-pip install -r requirements.txt
-
-# Deutsches Sprachmodell für spaCy herunterladen (optional, falls benötigt)
-python -m spacy download de_core_news_sm
+# 2. Automatisches Setup starten
+install.bat
 ```
 
-### Schritt 3: Starten
+Das war's! `install.bat` macht automatisch:
+- ✅ Python-Version prüfen
+- ✅ Virtuelle Umgebung erstellen
+- ✅ Alle Dependencies installieren
+- ✅ Optional: Auto-Start einrichten
+- ✅ App starten
 
-```bash
-# Mit aktivierter virtueller Umgebung:
-python main.py
-```
+### 📝 Manuelle Installation
 
-Das Programm läuft nun im Hintergrund mit einem Icon in der System Tray.
+Siehe [WINDOWS_README.md](WINDOWS_README.md) für detaillierte Anleitung.
 
 ## Nutzung
 
@@ -84,31 +73,68 @@ Hallo, ich bin <PERSON> und wohne in der <ORT>.
 Meine E-Mail ist <EMAIL> und meine Telefonnummer ist <TELEFON>.
 ```
 
-## Erkannte PII-Typen
+## 🔍 Erkannte PII-Typen
 
-- `<PERSON>` - Namen von Personen
+### Standard-Daten
+- `<PERSON>` - Namen von Personen (mit Titeln wie Dr., Prof.)
 - `<EMAIL>` - E-Mail-Adressen
-- `<TELEFON>` - Telefonnummern
-- `<ORT>` - Orte und Adressen
+- `<TELEFON>` - Telefonnummern (deutsche Formate)
+- `<ADRESSE>` - Straßenadressen (Hauptstraße, Musterweg, etc.)
+- `<ORT>` - PLZ + Städte
 - `<DATUM>` - Datums- und Zeitangaben
 - `<KREDITKARTE>` - Kreditkartennummern
-- `<IBAN>` - Bankverbindungen
+- `<IBAN>` - Bankverbindungen (IBAN)
+- `<KONTO-NR>` - Kontonummern
 - `<IP-ADRESSE>` - IP-Adressen
 - `<URL>` - Webseiten-URLs
 
-## Autostart einrichten (Optional)
+### Anwalts-spezifische Daten
+- `<AKTENZEICHEN>` - Aktenzeichen (Az. 1 Js 123/21)
+- `<STEUER-ID>` - Steuer-IDs
+- `<SV-NUMMER>` - Sozialversicherungsnummern
+- `<AUSWEIS-NR>` - Personalausweis-Nummern
 
-### Variante 1: Verknüpfung im Autostart-Ordner
+## ⚙️ Konfiguration
 
-1. Erstelle eine Verknüpfung zu `main.py`
-2. Kopiere sie nach: `C:\Users\[DEIN_NAME]\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`
+Bearbeite `config.toml` um die App anzupassen:
 
-### Variante 2: Task Scheduler
+### Hotkey ändern
+```toml
+[hotkey]
+combination = "ctrl+alt+a"  # Ändere zu z.B. "ctrl+shift+a"
+```
 
-1. Windows-Taskplaner öffnen
-2. Neue Aufgabe erstellen
-3. Bei "Trigger": Bei Anmeldung
-4. Bei "Aktion": `python.exe` mit Argument `"C:\Pfad\zu\main.py"`
+### Whitelist hinzufügen
+```toml
+[whitelist]
+custom = [
+    "Musterstadt GmbH",  # Wird NICHT anonymisiert
+    "Rechtsanwalt Müller",
+]
+```
+
+### Entities deaktivieren
+```toml
+[anonymization]
+enable_date = false  # Datum wird NICHT anonymisiert
+enable_url = false   # URLs werden NICHT anonymisiert
+```
+
+## 🔄 Auto-Start einrichten
+
+Der `install.bat` Installer bietet 3 Optionen:
+
+**Option 1: Startup-Ordner** (Einfach, OHNE Admin)
+- ✅ Einfach einzurichten
+- ❌ Hotkey funktioniert evtl. nicht ohne Admin
+
+**Option 2: Task Scheduler** (MIT Admin-Rechten)
+- ✅ Hotkey funktioniert zuverlässig
+- ⚠️ Benötigt Admin-Rechte bei Einrichtung
+- Führe `setup_admin_autostart.bat` als Administrator aus
+
+**Option 3: Manuell starten**
+- Rechtsklick auf `start.bat` → "Als Administrator ausführen"
 
 ## Logs
 
@@ -141,54 +167,19 @@ Logs werden in `anonymizer.log` gespeichert und helfen bei der Fehlersuche.
 
 MIT License
 
-## Cloud-Plattformen zum Testen (ohne Windows PC)
+## 📱 Cloud-Testing (ohne Windows PC)
 
-Wenn du das Projekt testen möchtest ohne Windows PC:
+Wenn du keinen Windows-PC hast, kannst du die Anonymisierung auf Cloud-Plattformen testen!
 
-### 1. **Replit** (EMPFOHLEN für schnelle Tests)
-🔗 https://replit.com
-- Kostenlos
-- Direkt im Browser (auch auf Android/Tablet)
-- Python vorinstalliert
-- Einfach Projekt hochladen und ausführen
-- **Tipp**: Nutze `test_simple.py` für schnelle Demo
+Siehe **[examples/docs/](examples/docs/)** für:
+- `COLAB_ANLEITUNG.md` - Google Colab Setup
+- `PRESIDIO_COLAB.md` - Presidio auf Colab nutzen
+- `ANWALT_ANLEITUNG.md` - Anleitung für Anwälte (DSGVO)
 
-### 2. **Google Colab** (Für Jupyter Notebooks)
-🔗 https://colab.research.google.com
-- Kostenlos mit Google Account
-- GPU verfügbar
-- Gut für Presidio-Tests
-- Funktioniert auf Tablets
-
-### 3. **GitHub Codespaces**
-🔗 https://github.com/codespaces
-- 60 Stunden/Monat kostenlos
-- VS Code im Browser
-- Voller Linux-Zugriff
-- Beste Option für vollständige Tests
-
-### 4. **PythonAnywhere**
-🔗 https://www.pythonanywhere.com
-- Free Tier verfügbar
-- Web-basierte Konsole
-- Gut für längerfristige Tests
-
-### Quick-Test auf Replit:
-
-```bash
-# 1. Auf replit.com registrieren
-# 2. "Create Repl" → "Import from GitHub"
-# 3. Deine Repository-URL eingeben
-# 4. In der Shell ausführen:
-pip install presidio-analyzer presidio-anonymizer
-python test_simple.py
-```
-
-## Hinweis zur Test-Version
-
-- `test_simple.py` - Funktioniert überall, nutzt nur Regex (Demo)
-- `test_anonymizer.py` - Benötigt Presidio (genauer, braucht mehr Setup)
-- Die Windows-App benötigt natürlich Windows für Hotkeys und System Tray
+Test-Scripts in **[examples/colab-tests/](examples/colab-tests/)**:
+- `presidio_anwalt.py` - Vollständiges Beispiel mit allen Patterns
+- `test_interactive.py` - Interaktiver Test mit Eingabe
+- `test_simple.py` - Einfacher Regex-basierter Demo
 
 ## Support
 

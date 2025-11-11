@@ -7,6 +7,7 @@ from pystray import MenuItem as item
 from PIL import Image, ImageDraw
 import logging
 from typing import Callable
+from .config_loader import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +20,12 @@ class TrayIcon:
         Args:
             on_quit_callback: Funktion die beim Beenden aufgerufen wird
         """
+        self.config = get_config()
         self.on_quit_callback = on_quit_callback
         self.icon = None
         self.current_status = 'ready'
+        self.icon_colors = self.config.get_icon_colors()
+        self.hotkey = self.config.get_hotkey()
 
     def create_icon_image(self, status='ready') -> Image.Image:
         """
@@ -33,14 +37,8 @@ class TrayIcon:
         width = 64
         height = 64
 
-        # Farben je nach Status
-        colors = {
-            'ready': '#4CAF50',    # 🟢 Grün - Bereit
-            'working': '#FFC107',  # 🟡 Gelb - Anonymisiert gerade...
-            'error': '#F44336'     # 🔴 Rot - Fehler
-        }
-
-        color = colors.get(status, '#4CAF50')
+        # Farben aus Config laden
+        color = self.icon_colors.get(status, self.icon_colors['ready'])
 
         # Erstelle Bild
         image = Image.new('RGB', (width, height), color=color)
@@ -95,7 +93,8 @@ class TrayIcon:
             # Erstelle Icon Bild (startet mit grün = bereit)
             icon_image = self.create_icon_image('ready')
 
-            # Erstelle Menü
+            # Erstelle Menü (mit dynamischem Hotkey aus Config)
+            hotkey_display = self.hotkey.replace('+', '+').upper()
             menu = pystray.Menu(
                 item(
                     '⚖️ Anonymify',
@@ -103,7 +102,7 @@ class TrayIcon:
                     enabled=False
                 ),
                 item(
-                    'Hotkey: Strg+Alt+A',
+                    f'Hotkey: {hotkey_display}',
                     lambda: None,
                     enabled=False
                 ),
