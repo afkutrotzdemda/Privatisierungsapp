@@ -198,10 +198,67 @@ if "%AUTOSTART_CHOICE%"=="1" (
 echo.
 
 REM ============================================================================
-REM SCHRITT 5: ABSCHLUSS
+REM SCHRITT 5: ERKENNUNGS-MODUS WAEHLEN
 REM ============================================================================
 
-echo [5/5] Installation abgeschlossen!
+echo [5/6] Erkennungs-Modus waehlen...
+echo.
+echo Wie genau soll die Namen-Erkennung sein?
+echo.
+echo OPTION 1: SCHNELL (empfohlen fuer Echtzeit)
+echo     + Sehr schnell (~0.1 Sekunden)
+echo     - Etwas weniger genau
+echo     - Keine zusaetzlichen Downloads
+echo.
+echo OPTION 2: GENAU (empfohlen bei vielen Fehlern)
+echo     + Sehr genau (Machine Learning)
+echo     - Etwas langsamer (~1 Sekunde)
+echo     + Laedt automatisch ML-Modell (50 MB)
+echo.
+echo OPTION 3: MAXIMUM (beste Genauigkeit)
+echo     + Maximale Genauigkeit
+echo     - Langsamer (~2-5 Sekunden)
+echo     + Laedt großes ML-Modell (100 MB)
+echo.
+
+set /p MODE_CHOICE="Waehle Modus (1/2/3): "
+
+if "%MODE_CHOICE%"=="1" (
+    echo.
+    echo     - Setze Modus auf: SCHNELL
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"fast\"' | Set-Content config.toml"
+    echo [OK] Modus 'fast' gewaehlt
+) else if "%MODE_CHOICE%"=="2" (
+    echo.
+    echo     - Setze Modus auf: GENAU
+    echo     - Installiere spaCy...
+    call venv\Scripts\activate.bat
+    pip install spacy -q
+    echo     - Lade deutsches ML-Modell (50 MB, kann 2-3 Min dauern)...
+    python -m spacy download de_core_news_sm
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"balanced\"' | Set-Content config.toml"
+    echo [OK] Modus 'balanced' gewaehlt + ML-Modell installiert!
+) else if "%MODE_CHOICE%"=="3" (
+    echo.
+    echo     - Setze Modus auf: MAXIMUM
+    echo     - Installiere spaCy...
+    call venv\Scripts\activate.bat
+    pip install spacy -q
+    echo     - Lade großes deutsches ML-Modell (100 MB, kann 5-10 Min dauern)...
+    python -m spacy download de_core_news_lg
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"accurate\"' | Set-Content config.toml"
+    echo [OK] Modus 'accurate' gewaehlt + großes ML-Modell installiert!
+) else (
+    echo [INFO] Keine Auswahl, nutze Standard (SCHNELL)
+    powershell -Command "(Get-Content config.toml) -replace 'recognition_mode = \".*\"', 'recognition_mode = \"fast\"' | Set-Content config.toml"
+)
+echo.
+
+REM ============================================================================
+REM SCHRITT 6: ABSCHLUSS
+REM ============================================================================
+
+echo [6/6] Installation abgeschlossen!
 echo.
 echo ====================================================================
 echo     INSTALLATION ERFOLGREICH!

@@ -7,11 +7,56 @@ from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern, Recogn
 from presidio_analyzer.nlp_engine import NlpEngine, SpacyNlpEngine
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
-from typing import List, Optional
+from presidio_anonymizer.operators import Operator, OperatorType
+from typing import List, Optional, Dict
 import logging
 import time
+import re
 
 logger = logging.getLogger(__name__)
+
+
+# Custom Operator: Ersetzt Namen durch ersten Buchstaben + Punkt
+class FirstLetterOperator(Operator):
+    """Anonymisiert Namen zu 'X.' (erster Buchstabe + Punkt)"""
+
+    def operate(self, text: str, params: Dict = None) -> str:
+        """
+        Ersetzt Text durch ersten Buchstaben + Punkt
+
+        "Max Mustermann" → "M."
+        "Dr. Anna Schmidt" → "D."
+        "Herr Müller" → "H."
+        """
+        if not text or not text.strip():
+            return text
+
+        # Entferne Leerzeichen
+        text = text.strip()
+
+        # Finde ersten Buchstaben (nicht Titel wie Dr., Herr, etc.)
+        # Entferne häufige Titel
+        text_without_title = re.sub(r'^(Herr|Frau|Dr\.|Prof\.|Hr\.|Fr\.|Herrn)\s+', '', text)
+
+        # Erster Buchstabe vom Rest
+        if text_without_title:
+            first_letter = text_without_title[0].upper()
+            return f"{first_letter}."
+
+        # Fallback: Erster Buchstabe vom Original
+        return f"{text[0].upper()}."
+
+    def validate(self, params: Dict = None) -> None:
+        """Validierung (nicht benötigt)"""
+        pass
+
+    def operator_name(self) -> str:
+        """Name des Operators"""
+        return "first_letter"
+
+    def operator_type(self) -> OperatorType:
+        """Typ des Operators"""
+        return OperatorType.Anonymize
 
 
 # Dummy NLP Engine (braucht kein spaCy!)
@@ -383,6 +428,9 @@ class TextAnonymizer:
             logger.info("Initialisiere Presidio Anonymizer...")
             self.anonymizer = AnonymizerEngine()
 
+            # Registriere Custom Operator für Namen
+            self.anonymizer.add_anonymizer(FirstLetterOperator())
+
             elapsed = time.time() - start_time
             logger.info(f"Presidio erfolgreich initialisiert! ({elapsed:.1f}s)")
             return True
@@ -435,12 +483,14 @@ class TextAnonymizer:
             logger.info(f"{len(analyzer_results)} PII-Entities nach Score-Filter (>={self.person_threshold} für Namen, >={self.other_threshold} für andere)")
 
             # Anonymisiere erkannte PII
+            # Namen werden zu "X." (erster Buchstabe + Punkt)
+            # Andere werden komplett ersetzt
             anonymized_result = self.anonymizer.anonymize(
                 text=text,
                 analyzer_results=analyzer_results,
                 operators={
                     "DEFAULT": OperatorConfig("replace", {"new_value": "<ANONYMISIERT>"}),
-                    "PERSON": OperatorConfig("replace", {"new_value": "<PERSON>"}),
+                    "PERSON": OperatorConfig("first_letter"),  # Custom: "Max" → "M."
                     "EMAIL_ADDRESS": OperatorConfig("replace", {"new_value": "<EMAIL>"}),
                     "PHONE_NUMBER": OperatorConfig("replace", {"new_value": "<TELEFON>"}),
                     "STREET_ADDRESS": OperatorConfig("replace", {"new_value": "<ADRESSE>"}),
