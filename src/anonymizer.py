@@ -171,7 +171,7 @@ class TextAnonymizer:
             Pattern(
                 name="long_name",
                 regex=r"\b[A-ZÄÖÜ][a-zäöüß]{3,}\s+[A-ZÄÖÜ][a-zäöüß]{4,}(-[A-ZÄÖÜ][a-zäöüß]+)?\b",
-                score=0.65
+                score=0.75  # Erhöht von 0.65, damit es über Threshold (0.7) liegt
             ),
         ]
         registry.add_recognizer(PatternRecognizer(
@@ -419,17 +419,18 @@ class TextAnonymizer:
             nlp_engine = self._create_nlp_engine()
 
             # Erstelle Analyzer
+            # Sprache muss konsistent mit Registry sein (alle Recognizers nutzen "en")
             self.analyzer = AnalyzerEngine(
                 registry=registry,
                 nlp_engine=nlp_engine,
-                supported_languages=["de", "en"]
+                supported_languages=["en"]  # Patterns funktionieren auch für deutsche Texte
             )
 
             logger.info("Initialisiere Presidio Anonymizer...")
             self.anonymizer = AnonymizerEngine()
 
-            # Registriere Custom Operator für Namen
-            self.anonymizer.add_anonymizer(FirstLetterOperator())
+            # Registriere Custom Operator für Namen (Klasse, nicht Instanz!)
+            self.anonymizer.add_anonymizer(FirstLetterOperator)
 
             elapsed = time.time() - start_time
             logger.info(f"Presidio erfolgreich initialisiert! ({elapsed:.1f}s)")
