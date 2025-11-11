@@ -490,7 +490,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="EMAIL_ADDRESS",
             patterns=[email_pattern],
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Telefon (deutsche Formate)
@@ -506,7 +506,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="PHONE_NUMBER",
             patterns=phone_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Namen (deutsche Vor- und Nachnamen)
@@ -540,7 +540,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="PERSON",
             patterns=name_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Straßenadressen
@@ -554,7 +554,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="STREET_ADDRESS",
             patterns=street_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # PLZ + Stadt
@@ -564,7 +564,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="LOCATION",
             patterns=postal_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Aktenzeichen
@@ -575,7 +575,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="CASE_NUMBER",
             patterns=case_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # IBAN
@@ -587,7 +587,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="IBAN_CODE",
             patterns=[iban_pattern],
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Kontonummer
@@ -598,7 +598,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="ACCOUNT_NUMBER",
             patterns=account_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Steuer-ID
@@ -609,7 +609,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="TAX_ID",
             patterns=tax_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Grundbuchnummern (Notariat)
@@ -620,7 +620,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="PROPERTY_REF",
             patterns=grundbuch_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Flurstück-Nummern (Kataster)
@@ -631,7 +631,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="LAND_PARCEL",
             patterns=flurstueck_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Sozialversicherungsnummer
@@ -643,7 +643,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="SOCIAL_SECURITY_NUMBER",
             patterns=[sv_pattern],
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Personalausweisnummer
@@ -654,7 +654,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="ID_NUMBER",
             patterns=id_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Datum
@@ -666,7 +666,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="DATE_TIME",
             patterns=date_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         # Kreditkarte
@@ -678,7 +678,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="CREDIT_CARD",
             patterns=[credit_card_pattern],
-            supported_language="en"
+            supported_language="de"
         ))
 
         # IP-Adresse
@@ -690,7 +690,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="IP_ADDRESS",
             patterns=[ip_pattern],
-            supported_language="en"
+            supported_language="de"
         ))
 
         # URL
@@ -701,7 +701,7 @@ class TextAnonymizer:
         registry.add_recognizer(PatternRecognizer(
             supported_entity="URL",
             patterns=url_patterns,
-            supported_language="en"
+            supported_language="de"
         ))
 
         return registry
@@ -942,7 +942,7 @@ class TextAnonymizer:
             start_analyze = time.time()
             analyzer_results = self.analyzer.analyze(
                 text=text_normalized,  # Nutze normalisierten Text für Analyse
-                language="en",  # Muss konsistent mit Registry sein
+                language="de",  # Deutsch für deutsche Texte!
                 entities=entities_to_anonymize
             )
             analyze_time = time.time() - start_analyze
