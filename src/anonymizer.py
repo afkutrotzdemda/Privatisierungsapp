@@ -838,13 +838,47 @@ class TextAnonymizer:
         Args:
             text: Der zu anonymisierende Text
             entities_to_anonymize: Liste von Entity-Typen die anonymisiert werden sollen.
-                                   None = alle erkannten Entities
+                                   None = alle unterstützten Entities (siehe DEFAULT_ENTITIES)
 
         Returns:
             Anonymisierter Text
         """
         if not text or not text.strip():
             return text
+
+        # Default: Alle unterstützten Entity-Typen
+        if entities_to_anonymize is None:
+            entities_to_anonymize = [
+                # Persönliche Daten
+                "PERSON",                    # Namen (mit Pattern + spaCy)
+                "EMAIL_ADDRESS",             # E-Mails
+                "PHONE_NUMBER",              # Telefonnummern
+                "DATE_TIME",                 # Geburtsdaten, Termine
+
+                # Adressen & Orte
+                "STREET_ADDRESS",            # Straßen (Musterstraße 123)
+                "LOCATION",                  # PLZ + Städte (12345 Berlin)
+
+                # Finanz-Daten
+                "IBAN_CODE",                 # IBAN
+                "CREDIT_CARD",               # Kreditkarten
+                "ACCOUNT_NUMBER",            # Kontonummern
+
+                # Identifikation
+                "TAX_ID",                    # Steuer-ID / Steuernummer
+                "SOCIAL_SECURITY_NUMBER",    # Sozialversicherungsnummer
+                "ID_NUMBER",                 # Ausweis-/Personalausweisnummer
+
+                # Juristische Daten
+                "CASE_NUMBER",               # Aktenzeichen (123 C 456/2024)
+                "PROPERTY_REF",              # Grundbuchnummern
+                "LAND_PARCEL",               # Flurstücknummern
+
+                # Internet
+                "IP_ADDRESS",                # IP-Adressen
+                "URL",                       # URLs/Webseiten
+            ]
+            logger.info(f"Verwende Standard-Entities: {len(entities_to_anonymize)} Typen")
 
         if not self.analyzer or not self.anonymizer:
             logger.warning("Presidio nicht initialisiert, initialisiere jetzt...")
