@@ -1,11 +1,12 @@
 """
-Globaler Hotkey Handler für Strg+Alt+A mit Status-Feedback
+Globaler Hotkey Handler mit konfigurierbarer Tastenkombination
 """
 
 import keyboard
 import pyperclip
 import logging
 from typing import Callable, Optional
+from .config_loader import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +20,12 @@ class HotkeyHandler:
             on_anonymize_callback: Funktion die aufgerufen wird wenn der Hotkey gedrückt wird
             on_status_change: Funktion die den Status ändert (z.B. für Tray Icon)
         """
+        self.config = get_config()
         self.on_anonymize_callback = on_anonymize_callback
         self.on_status_change = on_status_change
-        self.hotkey = "ctrl+alt+a"
+        self.hotkey = self.config.get_hotkey()
+        self.clipboard_delay = self.config.get_clipboard_delay()
+        self.error_reset_time = self.config.get_error_reset_time()
         self.is_running = False
 
     def start(self):
@@ -62,9 +66,9 @@ class HotkeyHandler:
             logger.info("Kopiere markierten Text (Strg+C)...")
             keyboard.send('ctrl+c')
 
-            # Kurz warten damit Strg+C fertig ist
+            # Kurz warten damit Strg+C fertig ist (Zeit aus Config)
             import time
-            time.sleep(0.2)  # 200ms warten
+            time.sleep(self.clipboard_delay)
 
             # Lese Text aus Zwischenablage
             text = pyperclip.paste()
@@ -94,10 +98,10 @@ class HotkeyHandler:
             # Bei Fehler trotzdem eine Nachricht in die Zwischenablage schreiben
             pyperclip.copy(f"FEHLER beim Anonymisieren: {str(e)}")
 
-            # Nach 3 Sekunden zurück zu 'ready'
+            # Nach konfigurierter Zeit zurück zu 'ready'
             import time
             import threading
             def reset_status():
-                time.sleep(3)
+                time.sleep(self.error_reset_time)
                 self._set_status('ready')
             threading.Thread(target=reset_status, daemon=True).start()

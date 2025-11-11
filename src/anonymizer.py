@@ -1,9 +1,9 @@
 """
 Text Anonymisierung mit Microsoft Presidio
-ERWEITERTE VERSION mit deutschen Mustern für Anwälte
+ERWEITERTE VERSION mit deutschen Mustern für Anwälte + Whitelist
 """
 
-from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern, RecognizerRegistry
+from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern, RecognizerRegistry, RecognizerResult
 from presidio_analyzer.nlp_engine import NlpEngine
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
@@ -46,7 +46,7 @@ class DummyNlpEngine(NlpEngine):
 
 
 class TextAnonymizer:
-    """Anonymisiert Text mit Presidio und erweiterten deutschen Patterns"""
+    """Anonymisiert Text mit Presidio und erweiterten deutschen Patterns + Whitelist"""
 
     def __init__(self, language: str = "de"):
         """
@@ -58,6 +58,17 @@ class TextAnonymizer:
         self.language = language
         self.analyzer = None
         self.anonymizer = None
+
+        # Lade Config und Whitelist
+        try:
+            from .config_loader import get_config
+            self.config = get_config()
+            self.whitelist = self.config.get_whitelist()
+            logger.info(f"Whitelist geladen: {len(self.whitelist)} Einträge")
+        except Exception as e:
+            logger.warning(f"Config konnte nicht geladen werden: {e}")
+            self.config = None
+            self.whitelist = []
 
     def _create_registry(self) -> RecognizerRegistry:
         """Erstellt Registry mit allen erweiterten Recognizers"""
@@ -252,6 +263,50 @@ class TextAnonymizer:
 
         return registry
 
+    def _filter_whitelist(self, text: str, analyzer_results: List[RecognizerResult]) -> List[RecognizerResult]:
+        """
+        Filtert erkannte Entities und entfernt die, die auf der Whitelist stehen
+
+        Args:
+            text: Der Original-Text
+            analyzer_results: Liste von erkannten Entities
+
+        Returns:
+            Gefilterte Liste ohne Whitelist-Einträge
+        """
+        if not self.whitelist:
+            return analyzer_results
+
+        filtered_results = []
+        removed_count = 0
+
+        for result in analyzer_results:
+            # Extrahiere den erkannten Text
+            detected_text = text[result.start:result.end]
+
+            # Prüfe ob auf Whitelist (case-insensitive)
+            if detected_text.lower() in self.whitelist:
+                logger.debug(f"Whitelist-Match: '{detected_text}' wird NICHT anonymisiert")
+                removed_count += 1
+                continue
+
+            # Prüfe ob ein Teil eines Whitelist-Eintrags ist
+            is_whitelisted = False
+            for whitelisted_term in self.whitelist:
+                if whitelisted_term in detected_text.lower():
+                    logger.debug(f"Whitelist-Partial-Match: '{detected_text}' enthält '{whitelisted_term}'")
+                    removed_count += 1
+                    is_whitelisted = True
+                    break
+
+            if not is_whitelisted:
+                filtered_results.append(result)
+
+        if removed_count > 0:
+            logger.info(f"Whitelist: {removed_count} Entities ausgeschlossen")
+
+        return filtered_results
+
     def initialize(self):
         """Initialisiert Presidio Engines (kann etwas dauern beim ersten Start)"""
         try:
@@ -311,6 +366,10 @@ class TextAnonymizer:
             )
 
             logger.info(f"{len(analyzer_results)} PII-Entities gefunden")
+
+            # Filtere Whitelist-Einträge
+            analyzer_results = self._filter_whitelist(text, analyzer_results)
+            logger.info(f"{len(analyzer_results)} PII-Entities nach Whitelist-Filter")
 
             # Anonymisiere erkannte PII
             anonymized_result = self.anonymizer.anonymize(

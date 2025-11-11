@@ -1,0 +1,96 @@
+# Anonymify Konfiguration
+# =======================
+
+[hotkey]
+# Tastenkombination für Anonymisierung
+# Format: "modifier1+modifier2+key"
+# Mögliche Modifier: ctrl, alt, shift, win
+# Beispiele:
+#   "ctrl+alt+a"      - Standard
+#   "ctrl+shift+a"    - Alternative
+#   "win+a"           - Windows-Taste + A
+#   "ctrl+alt+x"      - Andere Taste
+combination = "ctrl+alt+a"
+
+[whitelist]
+# Namen die NICHT anonymisiert werden sollen
+# Nützlich für allgemeine Begriffe, Organisationen, etc.
+# Groß-/Kleinschreibung wird ignoriert
+
+# Gerichtsbegriffe
+court_terms = [
+    "Gericht",
+    "Richter",
+    "Staatsanwaltschaft",
+    "Amtsgericht",
+    "Landgericht",
+    "Oberlandesgericht",
+    "Bundesgerichtshof",
+]
+
+# Behörden
+authorities = [
+    "Finanzamt",
+    "Polizei",
+    "Bundesamt",
+    "Krankenkasse",
+]
+
+# Berufsbezeichnungen
+professions = [
+    "Rechtsanwalt",
+    "Notar",
+    "Steuerberater",
+    "Arzt",
+]
+
+# Organisationen
+organizations = [
+    "Deutsche Bank",
+    "Sparkasse",
+    "AOK",
+    "TÜV",
+]
+
+# Eigene Einträge (hier eigene Namen hinzufügen)
+custom = [
+    # Beispiel: "Musterstadt GmbH",
+]
+
+[anonymization]
+# Anonymisierungs-Einstellungen
+
+# Entities die anonymisiert werden sollen (true = aktiv)
+# Deaktivieren Sie Entities die Sie NICHT anonymisieren wollen
+enable_person = true           # Namen von Personen
+enable_email = true            # E-Mail Adressen
+enable_phone = true            # Telefonnummern
+enable_address = true          # Straßenadressen
+enable_location = true         # Städte/PLZ
+enable_date = true             # Datum
+enable_iban = true             # IBAN
+enable_account_number = true   # Kontonummern
+enable_case_number = true      # Aktenzeichen
+enable_tax_id = true           # Steuer-IDs
+enable_social_security = true  # Sozialversicherung
+enable_id_number = true        # Personalausweis
+enable_credit_card = true      # Kreditkarten
+enable_ip_address = true       # IP Adressen
+enable_url = true              # URLs
+
+[advanced]
+# Erweiterte Einstellungen
+
+# Log-Level (DEBUG, INFO, WARNING, ERROR)
+log_level = "INFO"
+
+# Icon-Farben (Hex-Codes)
+icon_color_ready = "#4CAF50"    # Grün
+icon_color_working = "#FFC107"  # Gelb
+icon_color_error = "#F44336"    # Rot
+
+# Verzögerung nach Strg+C in Millisekunden
+clipboard_delay_ms = 200
+
+# Auto-Fehler-Reset in Sekunden
+error_reset_seconds = 3
