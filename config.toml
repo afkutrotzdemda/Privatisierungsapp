@@ -89,6 +89,17 @@ custom = [
 [anonymization]
 # Anonymisierungs-Einstellungen
 
+# Erkennungs-Modus:
+# "fast"     = Nur Pattern-Matching (schnell, ~0.1s, weniger genau)
+# "accurate" = Pattern + Machine Learning (langsam, ~2-5s, sehr genau)
+# "balanced" = Pattern + leichtes ML (mittel, ~1s, gute Balance)
+recognition_mode = "fast"
+
+# Score-Thresholds (nur für "fast" Modus relevant)
+# Je höher, desto weniger wird anonymisiert (weniger False Positives)
+person_score_threshold = 0.7   # Namen: 0.7 = Standard, 0.8 = strenger, 0.6 = lockerer
+other_score_threshold = 0.6    # Andere (E-Mail, IBAN, etc.)
+
 # Entities die anonymisiert werden sollen (true = aktiv)
 # Deaktivieren Sie Entities die Sie NICHT anonymisieren wollen
 enable_person = true           # Namen von Personen

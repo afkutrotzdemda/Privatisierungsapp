@@ -1,10 +1,10 @@
 """
 Text Anonymisierung mit Microsoft Presidio
-ERWEITERTE VERSION mit deutschen Mustern für Anwälte + Whitelist
+ERWEITERTE VERSION mit deutschen Mustern für Anwälte + Whitelist + ML-Modi
 """
 
 from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern, RecognizerRegistry, RecognizerResult
-from presidio_analyzer.nlp_engine import NlpEngine
+from presidio_analyzer.nlp_engine import NlpEngine, SpacyNlpEngine
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 from typing import List, Optional
@@ -64,11 +64,19 @@ class TextAnonymizer:
             from .config_loader import get_config
             self.config = get_config()
             self.whitelist = self.config.get_whitelist()
+            self.recognition_mode = self.config.get_recognition_mode()
+            self.person_threshold = self.config.get_person_score_threshold()
+            self.other_threshold = self.config.get_other_score_threshold()
             logger.info(f"Whitelist geladen: {len(self.whitelist)} Einträge")
+            logger.info(f"Erkennungs-Modus: {self.recognition_mode}")
+            logger.info(f"Score-Thresholds: Namen={self.person_threshold}, Andere={self.other_threshold}")
         except Exception as e:
             logger.warning(f"Config konnte nicht geladen werden: {e}")
             self.config = None
             self.whitelist = []
+            self.recognition_mode = 'fast'
+            self.person_threshold = 0.7
+            self.other_threshold = 0.6
 
     def _create_registry(self) -> RecognizerRegistry:
         """Erstellt Registry mit allen erweiterten Recognizers"""
@@ -312,23 +320,64 @@ class TextAnonymizer:
 
         return filtered_results
 
+    def _create_nlp_engine(self):
+        """Erstellt NLP-Engine basierend auf Modus"""
+        if self.recognition_mode == 'fast':
+            # Dummy Engine: Nur Pattern-Matching (schnell)
+            logger.info("Verwende Dummy NLP Engine (nur Patterns, schnell)")
+            return DummyNlpEngine()
+
+        elif self.recognition_mode in ['balanced', 'accurate']:
+            # Versuche spaCy zu laden
+            try:
+                logger.info(f"Versuche spaCy zu laden für Modus '{self.recognition_mode}'...")
+
+                # Lade deutsches Modell
+                model_name = "de_core_news_sm"  # Klein für balanced
+                if self.recognition_mode == 'accurate':
+                    # Versuche großes Modell für accurate
+                    try:
+                        import spacy
+                        spacy.load("de_core_news_lg")
+                        model_name = "de_core_news_lg"
+                        logger.info("Verwende großes spaCy-Modell (genauer, langsamer)")
+                    except:
+                        logger.warning("Großes Modell nicht gefunden, nutze kleines Modell")
+
+                nlp_engine = SpacyNlpEngine(models=[{"lang_code": "de", "model_name": model_name}])
+                logger.info(f"spaCy NLP Engine geladen: {model_name}")
+                return nlp_engine
+
+            except Exception as e:
+                logger.warning(f"Konnte spaCy nicht laden: {e}")
+                logger.warning("Falle zurück auf Dummy Engine (nur Patterns)")
+                logger.warning("Installiere spaCy für bessere Erkennung:")
+                logger.warning("  pip install spacy")
+                logger.warning("  python -m spacy download de_core_news_sm")
+                return DummyNlpEngine()
+
+        else:
+            logger.warning(f"Unbekannter Modus '{self.recognition_mode}', nutze 'fast'")
+            return DummyNlpEngine()
+
     def initialize(self):
         """Initialisiert Presidio Engines (kann etwas dauern beim ersten Start)"""
         try:
             logger.info("Initialisiere Presidio Analyzer...")
+            logger.info(f"Modus: {self.recognition_mode}")
             start_time = time.time()
 
             # Erstelle Registry mit allen Patterns
             registry = self._create_registry()
 
-            # Erstelle Dummy NLP Engine
-            dummy_nlp = DummyNlpEngine()
+            # Erstelle NLP Engine basierend auf Modus
+            nlp_engine = self._create_nlp_engine()
 
             # Erstelle Analyzer
             self.analyzer = AnalyzerEngine(
                 registry=registry,
-                nlp_engine=dummy_nlp,
-                supported_languages=["en"]
+                nlp_engine=nlp_engine,
+                supported_languages=["de", "en"]
             )
 
             logger.info("Initialisiere Presidio Anonymizer...")
@@ -376,15 +425,14 @@ class TextAnonymizer:
             analyzer_results = self._filter_whitelist(text, analyzer_results)
             logger.info(f"{len(analyzer_results)} PII-Entities nach Whitelist-Filter")
 
-            # Filtere nach Confidence-Score (nur sichere Matches)
-            # Für Namen: Mindestens Score 0.7 (nur mit Titel oder lange Namen)
-            # Für andere: Mindestens Score 0.6
+            # Filtere nach Confidence-Score (konfigurierbar via config.toml)
+            # Thresholds aus Config: person_threshold, other_threshold
             analyzer_results = [
                 r for r in analyzer_results
-                if (r.entity_type == "PERSON" and r.score >= 0.7) or
-                   (r.entity_type != "PERSON" and r.score >= 0.6)
+                if (r.entity_type == "PERSON" and r.score >= self.person_threshold) or
+                   (r.entity_type != "PERSON" and r.score >= self.other_threshold)
             ]
-            logger.info(f"{len(analyzer_results)} PII-Entities nach Score-Filter (>=0.7 für Namen)")
+            logger.info(f"{len(analyzer_results)} PII-Entities nach Score-Filter (>={self.person_threshold} für Namen, >={self.other_threshold} für andere)")
 
             # Anonymisiere erkannte PII
             anonymized_result = self.anonymizer.anonymize(

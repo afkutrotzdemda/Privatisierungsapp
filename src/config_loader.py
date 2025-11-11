@@ -38,6 +38,9 @@ class Config:
             'custom': []
         },
         'anonymization': {
+            'recognition_mode': 'fast',
+            'person_score_threshold': 0.7,
+            'other_score_threshold': 0.6,
             'enable_person': True,
             'enable_email': True,
             'enable_phone': True,
@@ -194,6 +197,18 @@ class Config:
     def get_log_level(self) -> str:
         """Gibt Log-Level zurück"""
         return self.config['advanced']['log_level']
+
+    def get_recognition_mode(self) -> str:
+        """Gibt Erkennungs-Modus zurück (fast/balanced/accurate)"""
+        return self.config['anonymization'].get('recognition_mode', 'fast')
+
+    def get_person_score_threshold(self) -> float:
+        """Gibt Score-Threshold für Namen zurück"""
+        return self.config['anonymization'].get('person_score_threshold', 0.7)
+
+    def get_other_score_threshold(self) -> float:
+        """Gibt Score-Threshold für andere Entities zurück"""
+        return self.config['anonymization'].get('other_score_threshold', 0.6)
 
 
 # Globale Config-Instanz
